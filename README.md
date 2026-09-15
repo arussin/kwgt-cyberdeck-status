@@ -1,0 +1,32 @@
+# Cyberdeck Status for KWGT
+
+**Six pixel-style Android widgets for Codex quotas and other percentage-based feeds.**
+
+![Six cyberdeck themes — sample data](previews/Collection_R41_Fixture_Preview.png)
+
+## How I use it
+
+**Codex tray on Windows → Tailscale → KWGT on Android.**
+
+The tray exports the numbers, Tailscale shares them privately, and KWGT draws the widget. No Tasker, MacroDroid, or extra server. Codex credentials stay on the PC.
+
+Inspired by **[Tooblippe's Codex Usage Tray](https://github.com/Tooblippe/codex-usage)**. The Windows changes live in **[my direct fork](https://github.com/arussin/codex-usage)**; this separate repository contains only widgets and original connector helpers. [Attribution](ATTRIBUTION.md).
+
+## Set it up
+
+**You need:** KWGT Pro and a status-feed URL. My setup also needs a Windows PC with signed-in Codex and Tailscale on both devices.
+
+1. **Get your URL:** [Codex setup](docs/CODEX_SETUP.md) or [another data source](docs/CUSTOM_CONNECTORS.md).
+2. **[Pick a theme](docs/THEMES.md)** and download its `.kwgt` file.
+3. Add a KWGT home-screen widget, size its box, then import and load the theme.
+4. Set **Globals → Source** to your URL and **Save**.
+
+**Tap the body to refresh; tap the header to edit.** Below 10% changes the warning colors; a fresh 100% shows FULL. The footer shows the PC reading's age, not when you tapped. [Refresh help](docs/REFRESH.md).
+
+> The Windows exporter is a release candidate. Its binary download will be published after final installation checks; the widgets are available below.
+
+## Make it yours
+
+**Change the data:** [supply the small JSON feed](docs/CUSTOM_CONNECTORS.md). **Change the look:** [edit the theme, title, or colors](docs/CUSTOMIZE.md).
+
+[MIT license](LICENSE) · [Contributing](CONTRIBUTING.md)

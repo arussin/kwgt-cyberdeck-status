@@ -1,0 +1,7 @@
+* text=auto
+*.json text eol=lf
+*.md text eol=lf
+*.py text eol=lf
+*.kwgt binary
+*.png binary
+*.jpg binary

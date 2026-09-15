@@ -1,0 +1,167 @@
+{
+  "checked_on": "2026-09-15",
+  "test_command": "python -m unittest discover -s tests -v",
+  "test_count": 28,
+  "test_result": "PASS",
+  "scope": "Offline Python, package structure, normalization and loopback HTTP only. No Android/KWGT execution.",
+  "themes": [
+    {
+      "theme": "00_Phosphor_Classic",
+      "sha256": "40207deb57db161f683e2893d79e68826075a5040dd722d836bb98cb56ca6398",
+      "unchanged_display_layers": 113,
+      "unchanged_touch_actions": true,
+      "unchanged_formula_logic": true,
+      "source_placeholder": "https://example.invalid/usage.json",
+      "empty_capture": true,
+      "thumbnails_without_exif": [
+        {
+          "name": "preset_thumb_landscape.jpg",
+          "size": [
+            720,
+            300
+          ]
+        },
+        {
+          "name": "preset_thumb_portrait.jpg",
+          "size": [
+            720,
+            300
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "01_Amber_Derelict",
+      "sha256": "041e5773ccf4409bf5928d9baf141a8692c6c7a024b7bd3c8d4ca6445e3a1b82",
+      "unchanged_display_layers": 129,
+      "unchanged_touch_actions": true,
+      "unchanged_formula_logic": true,
+      "source_placeholder": "https://example.invalid/usage.json",
+      "empty_capture": true,
+      "thumbnails_without_exif": [
+        {
+          "name": "preset_thumb_landscape.jpg",
+          "size": [
+            720,
+            300
+          ]
+        },
+        {
+          "name": "preset_thumb_portrait.jpg",
+          "size": [
+            720,
+            300
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "02_Ice_Vector",
+      "sha256": "0c8a6373397f734b98eca95813d2f51a3cca66fe5e726067348a3dc582ffb7ec",
+      "unchanged_display_layers": 135,
+      "unchanged_touch_actions": true,
+      "unchanged_formula_logic": true,
+      "source_placeholder": "https://example.invalid/usage.json",
+      "empty_capture": true,
+      "thumbnails_without_exif": [
+        {
+          "name": "preset_thumb_landscape.jpg",
+          "size": [
+            720,
+            300
+          ]
+        },
+        {
+          "name": "preset_thumb_portrait.jpg",
+          "size": [
+            720,
+            300
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "03_Rogue_Signal",
+      "sha256": "2574ac9d53f3a9c72bfee191bfc7f13e228c21268d29d6badaed589e5b4d346e",
+      "unchanged_display_layers": 121,
+      "unchanged_touch_actions": true,
+      "unchanged_formula_logic": true,
+      "source_placeholder": "https://example.invalid/usage.json",
+      "empty_capture": true,
+      "thumbnails_without_exif": [
+        {
+          "name": "preset_thumb_landscape.jpg",
+          "size": [
+            720,
+            300
+          ]
+        },
+        {
+          "name": "preset_thumb_portrait.jpg",
+          "size": [
+            720,
+            300
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "04_Field_Terminal",
+      "sha256": "78dd6443e6c6517a4b51ebeb26f1bcc599d2b57a5f668c7dba6da71788257842",
+      "unchanged_display_layers": 125,
+      "unchanged_touch_actions": true,
+      "unchanged_formula_logic": true,
+      "source_placeholder": "https://example.invalid/usage.json",
+      "empty_capture": true,
+      "thumbnails_without_exif": [
+        {
+          "name": "preset_thumb_landscape.jpg",
+          "size": [
+            720,
+            300
+          ]
+        },
+        {
+          "name": "preset_thumb_portrait.jpg",
+          "size": [
+            720,
+            300
+          ]
+        }
+      ]
+    },
+    {
+      "theme": "05_Ceramic_Orbit",
+      "sha256": "928c684c6b3a8c2892676f5fe381612ed224e09ff6f22ac7e84e0d4e46e18ff5",
+      "unchanged_display_layers": 117,
+      "unchanged_touch_actions": true,
+      "unchanged_formula_logic": true,
+      "source_placeholder": "https://example.invalid/usage.json",
+      "empty_capture": true,
+      "thumbnails_without_exif": [
+        {
+          "name": "preset_thumb_landscape.jpg",
+          "size": [
+            720,
+            300
+          ]
+        },
+        {
+          "name": "preset_thumb_portrait.jpg",
+          "size": [
+            720,
+            300
+          ]
+        }
+      ]
+    }
+  ],
+  "privacy_checks": {
+    "known_private_hostnames_and_addresses_absent": true,
+    "no_font_files": true,
+    "all_captures_empty": true,
+    "all_source_urls_inert": true,
+    "no_personal_phone_screenshots_included": true
+  },
+  "local_markdown_links_resolve": true
+}

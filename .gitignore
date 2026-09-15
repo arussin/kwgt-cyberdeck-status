@@ -1,0 +1,12 @@
+local/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.codex/
+auth.json
+.DS_Store
+Thumbs.db
+*.tmp
+export_*.kwgt

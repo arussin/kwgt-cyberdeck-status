@@ -1,0 +1,13 @@
+name: Widget package checks
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, verified 2026-09-15
+        with:
+          persist-credentials: false
+      - name: Test connector, archives, and privacy defaults
+        run: python3 -m unittest discover -s tests -v
