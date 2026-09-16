@@ -2,6 +2,19 @@
 
 Keep improvements small and preserve the working native-shape rendering path. Changes to Kustom formulas should include an actual phone test whenever possible; the Python tests do not execute KWGT.
 
+## Future work: customization
+
+The released presets have limited customization controls. Changing the Source URL is supported in KWGT; pixel titles currently use the Python builder, and changes to field names, units or warning rules require source/formula edits. See [current options](docs/CUSTOMIZE.md).
+
+Contributions are welcome to make these settings editable on the phone:
+
+- Main title and secondary labels, preserving the native pixel lettering.
+- Footer/source label.
+- Low-reserve warning threshold.
+- Showing or hiding reset information.
+
+These controls are future work and are not included in the current download. Proposals, small pull requests and Android testing across the six themes are welcome. Keep the existing appearance and behavior as defaults, preserve freshness/error handling, and check long labels and different widget sizes. Use synthetic data in examples and test reports.
+
 ## Local checks
 
 ```sh

@@ -25,8 +25,10 @@ Inspired by **[Tooblippe's Codex Usage Tray](https://github.com/Tooblippe/codex-
 
 **Downloads:** [all six widget themes](https://github.com/arussin/kwgt-cyberdeck-status/releases/tag/v0.1.0-preview.1) · [Windows tray with JSON export](https://github.com/arussin/codex-usage/releases/tag/v0.1.0-json-export-preview.2). Both are preview releases.
 
-## Make it yours
+## Customization and future work
 
-**Change the data:** [supply the small JSON feed](docs/CUSTOM_CONNECTORS.md). **Change the look:** [edit the theme, title, or colors](docs/CUSTOMIZE.md).
+**Customization is limited in this preview.** Change the Source URL in KWGT. Pixel titles such as “CODEX WEEKLY” require the Python builder; field names, units and warning rules require source/formula edits. [Current options](docs/CUSTOMIZE.md).
+
+Phone-editable titles, footer labels, warning thresholds and reset-display controls are future work. **[Contributions welcome](CONTRIBUTING.md#future-work-customization).**
 
 [MIT license](LICENSE) · [Contributing](CONTRIBUTING.md)
