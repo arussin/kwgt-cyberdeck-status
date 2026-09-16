@@ -20,11 +20,15 @@ The downloadable bundle remains a **draft prerelease**.
   self-contained draft build and passing automated checks. Its isolated export
   controls, persistence and failure behavior have also been exercised.
   [Windows evidence and limits](https://github.com/arussin/codex-usage/blob/main/docs/RELEASE_CHECKS.md).
-- The exact Windows draft separately passed launch, usage, layout at 150%
+- The earlier Windows folder draft passed launch, usage, layout at 150%
   scaling, opt-in export, custom destination, manual/automatic refresh,
   preference persistence and startup after real sign-in on a separate PC.
-  Update/rollback was not tested because no older installation was established.
-  [Windows acceptance report](https://github.com/arussin/codex-usage/blob/main/docs/WINDOWS_ACCEPTANCE.md).
+  [Folder-build acceptance](https://github.com/arussin/codex-usage/blob/main/docs/WINDOWS_ACCEPTANCE.md).
+- The single-EXE draft passed separate-PC launch, layout, retained export
+  settings, manual refresh, disabled-export preservation and return to the
+  preserved folder build. Startup remains unresolved: an automatic launch used
+  a temporary ZIP copy while its Run entry targeted the permanent folder.
+  [Single-EXE acceptance and remaining check](https://github.com/arussin/codex-usage/blob/main/docs/SINGLE_EXE_ACCEPTANCE.md).
 
 The phone check used the existing deployed exporter. It does not establish an
 end-to-end installation of the draft Windows binary or all Android edge cases.
@@ -32,8 +36,10 @@ No widget redesign or preset changes were needed for this check.
 
 ## Remaining acceptance checks
 
-- [ ] Complete the Windows update/rollback check in a separate environment with
-  an older installation; the fresh-install acceptance did not test rollback.
+- [x] Verify switching from the preserved Windows folder build to the single
+  EXE and back, with readings and the saved export destination retained.
+- [ ] Resolve the single-EXE startup-path and UI cleanup anomaly on the separate
+  test PC before accepting that Windows package.
 - [ ] Read that candidate export from Android by its ordinary private hostname,
   including the automatic/query/tap path across real file replacements.
 - [ ] Confirm stale, no-data, unavailable, low, exhausted and FULL states using a
