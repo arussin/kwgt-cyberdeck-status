@@ -1,7 +1,6 @@
-# Release verification
+# Pre-publication verification
 
-Status on 2026-09-16: widget source and individual `.kwgt` files are public.
-The downloadable bundle remains a **draft prerelease**.
+This records checks performed before publication on 2026-09-16. For current downloads, see the [six-theme preview release](https://github.com/arussin/kwgt-cyberdeck-status/releases/tag/v0.1.0-preview.1).
 
 ## Verified
 

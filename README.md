@@ -23,7 +23,7 @@ Inspired by **[Tooblippe's Codex Usage Tray](https://github.com/Tooblippe/codex-
 
 **Tap the body to refresh; tap the header to edit.** Below 10% changes the warning colors; a fresh 100% shows FULL. The footer shows the PC reading's age, not when you tapped. [Refresh help](docs/REFRESH.md).
 
-> The Windows exporter is a release candidate. Its binary download will be published after final installation checks; the widgets are available below.
+**Downloads:** [all six widget themes](https://github.com/arussin/kwgt-cyberdeck-status/releases/tag/v0.1.0-preview.1) · [Windows tray with JSON export](https://github.com/arussin/codex-usage/releases/tag/v0.1.0-json-export-preview.2). Both are preview releases.
 
 ## Make it yours
 

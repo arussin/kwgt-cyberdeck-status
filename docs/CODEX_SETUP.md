@@ -2,11 +2,11 @@
 
 **Windows tray → private Tailscale URL → KWGT Pro.** No extra server or task app.
 
-> **Exporter release candidate:** use [my direct fork](https://github.com/arussin/codex-usage), not the unmodified upstream app. The first binary is held as a draft until final Windows/phone checks pass. [Release status](RELEASE_CHECKLIST.md).
+> The optional JSON exporter is available in [my direct fork](https://github.com/arussin/codex-usage).
 
 ## 1. Enable JSON export
 
-When available, download the **complete self-contained Windows x64 ZIP** from [the fork’s releases](https://github.com/arussin/codex-usage/releases). Extract everything to a stable folder and run `CodexUsageTray.exe`. You need a working, signed-in Codex CLI; no SDK or compilation is required. Already running a tray? Use the fork release's backup/update instructions first.
+Download `CodexUsageTray-single-exe-win-x64-preview.zip` from the [Windows preview release](https://github.com/arussin/codex-usage/releases/tag/v0.1.0-json-export-preview.2). Extract everything to a stable folder and run `CodexUsageTray.exe`. You need a working, signed-in Codex CLI; no SDK or compilation is required. Already running a tray? Use the fork release's backup/update instructions first.
 
 Right-click the tray → **JSON export → Enable export**. After a successful reading it writes:
 
