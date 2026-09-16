@@ -1,6 +1,6 @@
 # Release verification
 
-Status on 2026-09-15: widget source and individual `.kwgt` files are public.
+Status on 2026-09-16: widget source and individual `.kwgt` files are public.
 The downloadable bundle remains a **draft prerelease**.
 
 ## Verified
@@ -14,10 +14,17 @@ The downloadable bundle remains a **draft prerelease**.
 - The public Phosphor Classic preset was imported on Android. After replacing
   the example Source with the working URL and saving, the user confirmed it
   displayed usage and completed the phone test task.
+- The user reported slow tap refresh with battery saver active and confirmed
+  normal tap refresh after disabling it. No preset changes were needed.
 - The separate Windows repository is a verified direct GitHub fork, with a
   self-contained draft build and passing automated checks. Its isolated export
   controls, persistence and failure behavior have also been exercised.
   [Windows evidence and limits](https://github.com/arussin/codex-usage/blob/main/docs/RELEASE_CHECKS.md).
+- The exact Windows draft separately passed launch, usage, layout at 150%
+  scaling, opt-in export, custom destination, manual/automatic refresh,
+  preference persistence and startup after real sign-in on a separate PC.
+  Update/rollback was not tested because no older installation was established.
+  [Windows acceptance report](https://github.com/arussin/codex-usage/blob/main/docs/WINDOWS_ACCEPTANCE.md).
 
 The phone check used the existing deployed exporter. It does not establish an
 end-to-end installation of the draft Windows binary or all Android edge cases.
@@ -25,8 +32,8 @@ No widget redesign or preset changes were needed for this check.
 
 ## Remaining acceptance checks
 
-- [ ] Test the exact Windows draft binary on a clean supported account or separate
-  machine, including CLI discovery, installation, startup and rollback.
+- [ ] Complete the Windows update/rollback check in a separate environment with
+  an older installation; the fresh-install acceptance did not test rollback.
 - [ ] Read that candidate export from Android by its ordinary private hostname,
   including the automatic/query/tap path across real file replacements.
 - [ ] Confirm stale, no-data, unavailable, low, exhausted and FULL states using a

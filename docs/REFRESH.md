@@ -28,7 +28,7 @@ A stale or cached response does not tell us whether a PC is asleep, Tailscale is
 2. Open the URL from the phone browser using the same network/Tailscale connection. Check the source time and the field types.
 3. In KWGT, tap Save, return home and tap the card body. The header reopens the editor.
 4. Verify the collector actually advances `refreshedAt` after real measurements. Do not “fix” old data by rewriting only its timestamp.
-5. Check KWGT's battery/network settings, but do not enable every-second rendering as a substitute for network updates.
+5. If tapping is slow, temporarily turn off Android Battery Saver and try one tap again. This resolved the delay in the reported phone test. Check KWGT's background/battery and network settings too. Every-second rendering is not a substitute for network updates. See [Kustom's delayed-update guidance](https://docs.kustom.rocks/docs/common_issues/widget_not_udpating/).
 6. For reports, include Android/KWGT version, launcher, theme, and a redacted sample payload. Never attach secrets or an unsanitized preset export.
 
 Native shape/path rendering avoids the image-resource failures encountered during development. It is not a guarantee of identical behavior on every launcher, device, or future KWGT build.
