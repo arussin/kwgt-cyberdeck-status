@@ -26,9 +26,10 @@ The downloadable bundle remains a **draft prerelease**.
   [Folder-build acceptance](https://github.com/arussin/codex-usage/blob/main/docs/WINDOWS_ACCEPTANCE.md).
 - The single-EXE draft passed separate-PC launch, layout, retained export
   settings, manual refresh, disabled-export preservation and return to the
-  preserved folder build. Startup remains unresolved: an automatic launch used
-  a temporary ZIP copy while its Run entry targeted the permanent folder.
-  [Single-EXE acceptance and remaining check](https://github.com/arussin/codex-usage/blob/main/docs/SINGLE_EXE_ACCEPTANCE.md).
+  preserved folder build. Its controlled sign-in startup test **failed** despite
+  a verified permanent-path EXE and matching Run entry; the cause is unknown.
+  Disabling startup through its menu passed and original settings were restored.
+  [Single-EXE acceptance results](https://github.com/arussin/codex-usage/blob/main/docs/SINGLE_EXE_ACCEPTANCE.md).
 
 The phone check used the existing deployed exporter. It does not establish an
 end-to-end installation of the draft Windows binary or all Android edge cases.
@@ -38,8 +39,8 @@ No widget redesign or preset changes were needed for this check.
 
 - [x] Verify switching from the preserved Windows folder build to the single
   EXE and back, with readings and the saved export destination retained.
-- [ ] Resolve the single-EXE startup-path and UI cleanup anomaly on the separate
-  test PC before accepting that Windows package.
+- [ ] Diagnose and resolve the failed controlled single-EXE Windows startup
+  before accepting that package. Its startup-disable menu check passed.
 - [ ] Read that candidate export from Android by its ordinary private hostname,
   including the automatic/query/tap path across real file replacements.
 - [ ] Confirm stale, no-data, unavailable, low, exhausted and FULL states using a
