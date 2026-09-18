@@ -1,5 +1,13 @@
 # Changelog
 
+## CD4.2 low-reserve color fix - 2026-09-17
+
+- Keep valid below-10% warning colors independent of source freshness across all six themes.
+- Preserve stale/cached/error status labels, source age, reset text, and fresh-only FULL behavior.
+- Cover percentage glyphs, filled bar cells, borders, and theme-specific warning accents.
+- Rebuild all six native presets and checksums; preset titles identify CD4.2.
+- Add eight offline regression tests (36 total passing). Tests evaluate the final color-expression subset and archive consistency, not Android/KWGT rendering. Phosphor Classic was confirmed working on the phone by the user; other themes still require on-device acceptance.
+
 ## Documentation handoff v3 — 2026-09-15
 
 - Filled in the recovered export path and the candidate's explicit Enable export step.
