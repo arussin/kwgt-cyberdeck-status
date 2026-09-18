@@ -20,6 +20,8 @@ LOW RESERVE | Valid remaining reserve below 10%
 EXHAUSTED | A genuine 0%, distinct from unavailable
 FULL | Exactly 100%, with valid recent non-fallback data
 
+**Low-reserve colors and data freshness are independent.** In CD4.2, a valid displayed reading below 10% (including 0%) keeps its warning colors even when stale, cached, refreshing with a retained snapshot, age-unknown, or clock-skewed. The status and source-age indicators still describe that uncertainty; warning colors do not mean the reading is current. Missing, invalid, or explicitly unavailable data does not trigger a low-reserve color, and the existing fresh, non-fallback requirement for FULL is unchanged.
+
 A stale or cached response does not tell us whether a PC is asleep, Tailscale is down, or an API failed. The widget does not claim to know the cause.
 
 ## Troubleshooting order
