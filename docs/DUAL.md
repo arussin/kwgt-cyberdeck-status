@@ -40,7 +40,9 @@ Use Python 3.10+:
 python tools/dual.py --label CLAUDE --output local/dual
 ```
 
-Import `local/dual/Ember_Dual_CLAUDE.kwgt` into KWGT, set **Globals → Source** to your feed URL without query strings, and **Save**. The header takes up to 20 characters from the pixel alphabet. `--palette phosphor` keeps the mint Phosphor Classic colours instead of the warm Ember ones.
+Import `local/dual/Ember_Dual_CLAUDE.kwgt` into KWGT, set **Globals → Source** to your feed URL without query strings, and **Save**.
+
+If you move the file to your phone through your own file server, put it inside a zip first. A `.kwgt` file is itself a zip archive, and a server that labels it as one makes the phone save it under a zip name that KWGT will not pick. The header takes up to 20 characters from the pixel alphabet. `--palette phosphor` keeps the mint Phosphor Classic colours instead of the warm Ember ones.
 
 To review a layout change without a phone:
 
@@ -70,4 +72,4 @@ Both rows share one request URL and one source timestamp, so the card makes the 
 
 The offline tests check that the weekly row's formulas are identical to Phosphor Classic's, that the five-hour row differs only in the documented ways, that the time line is the theme's reset formula plus one step built from functions the themes already use, that the tap action has no undefined variable, that text does not collide or leave the card, and that the archive is reproducible and carries no private endpoint.
 
-They do not run Kustom. **On-device behaviour of this layout has not been confirmed yet.** The parts most worth checking on a phone are the time line, the leaning segments, the eight-field snapshot after a tap, and how the card performs with about 150 live modules where the other themes have about 100.
+They do not run Kustom. On 2026-11-21 the user loaded this card on his phone, with the CLAUDE label and the Ember palette, and confirmed that it works and shows his readings. That is one device and one build. Individual parts were not checked one by one: the time line's colour change, the held snapshot after a tap, and speed over a longer period, with about 150 live modules where the other themes have about 100, are still worth watching. Other labels, the Phosphor palette and other devices are untested.

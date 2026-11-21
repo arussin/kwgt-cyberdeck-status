@@ -5,7 +5,8 @@
 - Ember Dual keeps its two rows and gains a title plate, tag plates, leaning meter segments and, under each meter, a line for the time left in that window. The line turns red when less reserve is left than time, meaning the reserve is being used faster than the clock.
 - The time line is one new formula built on the theme's reset-time formula. The meter segments are the theme's cells drawn as native paths. Everything else is still reused unchanged.
 - Shared drawing helpers moved into `tools/dual.py`; `tools/cassette.py` uses them.
-- Two new offline tests (62 total passing). They do not run KWGT. **Not confirmed on a phone yet.**
+- Two new offline tests (62 total passing). They do not run KWGT.
+- Confirmed working on the user's phone the same day, with the CLAUDE label and Ember palette. [What that covers](docs/DUAL.md#what-is-verified). The `--field` builds and Data Cassette are still not confirmed on a phone.
 
 ## Data Cassette - 2026-11-21
 
