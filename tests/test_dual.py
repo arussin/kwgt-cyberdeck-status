@@ -226,9 +226,13 @@ class DualTests(unittest.TestCase):
                 with self.subTest(label=label):
                     built = dual.build_dual(Path(td)/label, label)
                     published = ROOT/'dual'/built.name
-                    self.assertEqual(published.read_bytes(), built.read_bytes())
                     self.assertIn(built.name, sums)
-                    with zipfile.ZipFile(published) as archive:
+                    # Compare what is inside, not the archive bytes: compressed output can
+                    # differ between zlib builds while the preset itself is identical.
+                    with zipfile.ZipFile(published) as archive, zipfile.ZipFile(built) as fresh:
+                        self.assertEqual(archive.namelist(), fresh.namelist())
+                        for member in fresh.namelist():
+                            self.assertEqual(archive.read(member), fresh.read(member), member)
                         data = json.loads(archive.read('preset.json'))
                     self.assertEqual(data['preset_root']['globals_list']['source']['value'], build.PLACEHOLDER)
                     self.assertNotRegex(json.dumps(data), r'[\w.-]+\.ts\.net')
