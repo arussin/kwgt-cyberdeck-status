@@ -58,9 +58,30 @@ def header_path(data: dict, label: str) -> str:
     return ''.join(result)
 
 
+def select_field(data: dict, field: str) -> dict:
+    """Read another object of the feed, e.g. fiveHour, in place of weekly.
+    The object must hold the same available/remaining/resetsAt fields."""
+    if not re.fullmatch(r'[A-Za-z][A-Za-z0-9]{0,31}', field):
+        raise ValueError('Field must be 1–32 ASCII letters or digits, starting with a letter.')
+    if field == 'weekly':
+        return data
+    # Formulas address the feed as wg(url, json, ".weekly.<name>"). Inside serialized JSON
+    # that opening quote is escaped, which keeps this from touching any other text.
+    text = json.dumps(data, ensure_ascii=False)
+    old, new = '\\".weekly.', f'\\".{field}.'
+    if old not in text:
+        raise ValueError('Preset has no weekly feed paths to redirect.')
+    data = json.loads(text.replace(old, new))
+    data['preset_info']['id'] = uuid.uuid5(uuid.NAMESPACE_URL,
+        data['preset_info']['id'] + ':field:' + field).hex
+    return data
+
+
 def customize(original: dict, *, label: str | None = None,
-              source_label: str | None = None) -> dict:
+              source_label: str | None = None, field: str | None = None) -> dict:
     data = copy.deepcopy(original)
+    if field:
+        data = select_field(data, field)
     if label:
         path = header_path(data, label)
         for item in data['preset_root']['viewgroup_items']:
@@ -104,11 +125,12 @@ def pack(data: dict, src: Path, destination: Path) -> None:
             out.writestr(info, content)
 
 
-def build(output: Path, label: str | None = None, source_label: str | None = None) -> list[Path]:
+def build(output: Path, label: str | None = None, source_label: str | None = None,
+          field: str | None = None) -> list[Path]:
     paths = []
     for source in sorted((ROOT/'src').glob('*/preset.json')):
         original = json.loads(source.read_text(encoding='utf-8'))
-        data = customize(original, label=label, source_label=source_label)
+        data = customize(original, label=label, source_label=source_label, field=field)
         # No saved account state is ever shipped, even after manual source edits.
         globals_ = data['preset_root']['globals_list']
         globals_['source']['value'] = PLACEHOLDER
@@ -127,11 +149,14 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, default=ROOT/'presets')
     parser.add_argument('--label', help='Optional pixel header, e.g. API RESERVE. Max 20 ASCII characters.')
     parser.add_argument('--source-label', help='Optional footer label, e.g. SOURCE. Max 7 characters.')
+    parser.add_argument('--field', help='Optional feed object to show in place of weekly, e.g. fiveHour.')
     args = parser.parse_args()
     try:
-        paths = build(args.output, args.label, args.source_label)
+        paths = build(args.output, args.label, args.source_label, args.field)
     except (ValueError, OSError, KeyError) as error:
         parser.exit(1, f'Build failed: {error}\n')
     print(f'Built {len(paths)} presets in {args.output}')
+    if args.field:
+        print(f'These presets read the "{args.field}" object of the feed. Verify them on your phone.')
     if args.label or args.source_label:
         print('Custom titles use original sample thumbnails. Verify custom layout on your phone.')

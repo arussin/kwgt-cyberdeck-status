@@ -1,5 +1,12 @@
 # Changelog
 
+## Second feed object and Ember Dual - 2026-11-21
+
+- `tools/build.py --field <name>` rebuilds the six themes to read another object of the feed, such as `fiveHour`, in place of `weekly`. Only the feed paths and the preset identity change.
+- New experimental **Ember Dual**: one card with the five-hour and weekly reserves stacked, composed by `tools/dual.py` from Phosphor Classic's formulas with a new layout and a warm palette. `tools/dual_preview.py` draws it offline with sample data.
+- The six published presets, their sources and checksums are unchanged.
+- Thirteen new offline tests (49 total passing). They compare the generated formulas with the theme they come from and check structure, layout bounds and archive reproducibility. They do not run KWGT. **Neither addition has been confirmed on a phone yet.**
+
 ## CD4.2 low-reserve color fix - 2026-09-17
 
 - Keep valid below-10% warning colors independent of source freshness across all six themes.
