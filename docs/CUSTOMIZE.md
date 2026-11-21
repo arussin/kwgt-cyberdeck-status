@@ -9,6 +9,8 @@ The current themes draw their pixel lettering with native shapes. **“CODEX WEE
 | Main pixel title | Rebuild with `--label` below. |
 | “PC DATA” footer label | Rebuild with `--source-label` below. |
 | What the percentage measures | Supply another feed using the [existing JSON fields](CUSTOM_CONNECTORS.md). |
+| Which object of the feed is shown | Rebuild with `--field` below. |
+| Two readings in one card | Build the experimental [Ember Dual](DUAL.md) or [Data Cassette](CASSETTE.md). |
 | Field names, units, low/full rules or reset wording | Advanced source/formula changes; these are not exposed as simple Globals controls. |
 
 ## Change the pixel title
@@ -22,6 +24,16 @@ python tools/build.py --label "API RESERVE" --source-label "SOURCE" --output loc
 Import a file from `local/presets` and set its **Globals → Source** URL. The tool makes all six themes with the new title and replaces supported secondary period labels with neutral wording.
 
 Titles support up to 20 characters from the preset's pixel alphabet. Source labels support 1–7 letters, digits or spaces. Labels are converted to uppercase. Check the result on your phone; preview thumbnails are not regenerated.
+
+## Show another object of the feed
+
+A feed can carry more than `weekly`. The Windows tray's files also hold a `fiveHour` object with the same three fields. To build themes that show it:
+
+```sh
+python tools/build.py --field fiveHour --label "CLAUDE 5 HOUR" --output local/presets
+```
+
+`--field` redirects every `.weekly.` read in the formulas to the named object and changes nothing else. The object must hold `available`, `remaining` and `resetsAt`. The reset line already prints the day and time, so it suits a short window. Check the result on your phone.
 
 ## Change the data
 

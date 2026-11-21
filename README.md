@@ -25,6 +25,18 @@ Inspired by **[Tooblippe's Codex Usage Tray](https://github.com/Tooblippe/codex-
 
 **Downloads:** [all six widget themes](https://github.com/arussin/kwgt-cyberdeck-status/releases/tag/v0.1.0-preview.1) · [Windows tray with JSON export](https://github.com/arussin/codex-usage/releases/tag/v0.1.0-json-export-preview.2). Both are preview releases.
 
+## More than one number
+
+Each of the six themes shows one percentage. Two additions cover feeds that carry more:
+
+- **Another object of the feed.** `python tools/build.py --field fiveHour --label "CLAUDE 5 HOUR"` rebuilds the themes to read the feed's `fiveHour` object in place of `weekly`. [Options](docs/CUSTOMIZE.md).
+- **Ember Dual (experimental).** One card with the five-hour and weekly reserves stacked, each with a line showing the time left in its window. Built by `tools/dual.py`. [Details and status](docs/DUAL.md).
+- **Data Cassette (experimental).** A more playful take: a cassette in a deck with one reel per reserve. Built by `tools/cassette.py`. [Details and status](docs/CASSETTE.md).
+
+![Ember Dual layout with sample data](previews/Ember_Dual_Layout_Preview.png)
+
+The [Windows tray](https://github.com/arussin/codex-usage) can also export Claude plan limits as `claude.json` beside `usage.json`; point a widget's Source at that file.
+
 ## Customization and future work
 
 **Customization is limited in this preview.** Change the Source URL in KWGT. Pixel titles such as “CODEX WEEKLY” require the Python builder; field names, units and warning rules require source/formula edits. [Current options](docs/CUSTOMIZE.md).

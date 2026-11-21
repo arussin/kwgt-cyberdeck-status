@@ -222,6 +222,47 @@ class PresetTests(unittest.TestCase):
                 self.assertEqual(len(data['preset_root']['viewgroup_items']),
                                  len(custom['preset_root']['viewgroup_items']))
 
+    def test_field_selection_redirects_every_feed_path_only(self):
+        for path, data in self.sources:
+            with self.subTest(theme=path.parent.name):
+                original = json.dumps(data, ensure_ascii=False)
+                custom = build.customize(data, field='fiveHour')
+                text = json.dumps(custom, ensure_ascii=False)
+                self.assertNotIn('.weekly.', text)
+                self.assertEqual(text.count('\\".fiveHour.'), original.count('\\".weekly.'))
+                for name in ('remaining', 'available', 'resetsAt'):
+                    self.assertEqual(text.count(f'.fiveHour.{name}'), original.count(f'.weekly.{name}'))
+                # The source timestamp is shared by every object of the feed and stays where it is.
+                self.assertEqual(text.count('.refreshedAt'), original.count('.refreshedAt'))
+                self.assertNotEqual(custom['preset_info']['id'], data['preset_info']['id'])
+                # Nothing but the feed paths and the preset identity changes.
+                restored = json.loads(text.replace('\\".fiveHour.', '\\".weekly.'))
+                restored['preset_info']['id'] = data['preset_info']['id']
+                self.assertEqual(restored, data)
+
+    def test_field_selection_defaults_and_rejects_unsafe_names(self):
+        data = self.sources[0][1]
+        self.assertEqual(build.customize(data, field='weekly'), data)
+        for field in ('five.hour', 'a"b', '1st', '', 'x'*33, 'five hour'):
+            with self.subTest(field=field):
+                if field:
+                    with self.assertRaises(ValueError): build.customize(data, field=field)
+                else:
+                    self.assertEqual(build.customize(data, field=field), data)
+
+    def test_field_build_combines_with_labels_and_packs(self):
+        with tempfile.TemporaryDirectory() as td:
+            paths = build.build(Path(td)/'out', label='CLAUDE 5 HOUR', field='fiveHour')
+            self.assertEqual(len(paths), 6)
+            for path in paths:
+                with zipfile.ZipFile(path) as archive:
+                    data = json.loads(archive.read('preset.json'))
+                text = json.dumps(data, ensure_ascii=False)
+                self.assertNotIn('.weekly.', text)
+                self.assertIn('.fiveHour.remaining', text)
+                self.assertEqual(data['preset_root']['globals_list']['source']['value'], build.PLACEHOLDER)
+                self.assertTrue(data['preset_info']['title'].endswith('/ CLAUDE 5 HOUR'))
+
     def test_unsupported_header_and_source_labels_fail(self):
         data = self.sources[0][1]
         for label in ('x'*21, '中文'):
