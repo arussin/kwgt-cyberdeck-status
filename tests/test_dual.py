@@ -219,6 +219,20 @@ class DualTests(unittest.TestCase):
                 self.assertNotIn('layout', item); self.assertNotIn('text', item)
             self.assertEqual(data['preset_info']['title'], 'CD4.2 / Ember Dual / CLAUDE')
 
+    def test_published_downloads_match_the_builder(self):
+        sums = (ROOT/'dual'/'SHA256SUMS.txt').read_text().split()
+        with tempfile.TemporaryDirectory() as td:
+            for label in ('CLAUDE', 'CODEX'):
+                with self.subTest(label=label):
+                    built = dual.build_dual(Path(td)/label, label)
+                    published = ROOT/'dual'/built.name
+                    self.assertEqual(published.read_bytes(), built.read_bytes())
+                    self.assertIn(built.name, sums)
+                    with zipfile.ZipFile(published) as archive:
+                        data = json.loads(archive.read('preset.json'))
+                    self.assertEqual(data['preset_root']['globals_list']['source']['value'], build.PLACEHOLDER)
+                    self.assertNotRegex(json.dumps(data), r'[\w.-]+\.ts\.net')
+
     def test_unsupported_label_or_palette_fails(self):
         for label in ('x'*21, '中文'):
             with self.subTest(label=label), self.assertRaises(ValueError):

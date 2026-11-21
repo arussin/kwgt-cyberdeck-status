@@ -32,9 +32,18 @@ A feed with both a `fiveHour` and a `weekly` object, plus `refreshedAt`:
 
 Each object follows the [existing contract](CONNECTOR_REFERENCE.md#the-stable-contract). The [Windows tray](https://github.com/arussin/codex-usage) writes this shape for Codex (`usage.json`) and, when its Claude numbers are switched on, for Claude (`claude.json`). A row whose object is missing or unavailable shows `--%` and UNAVAILABLE; the other row still works. The time line assumes a five-hour window for the upper row and a seven-day window for the lower one.
 
-## Build and load it
+## Download it
 
-Use Python 3.10+:
+| Header | File |
+|---|---|
+| CLAUDE | [Download](../dual/Ember_Dual_CLAUDE.kwgt) |
+| CODEX | [Download](../dual/Ember_Dual_CODEX.kwgt) |
+
+In GitHub's file view, choose **Download raw file**, then import it into KWGT. Set **Globals → Source** to your feed URL without query strings, and **Save**. [Checksums](../dual/SHA256SUMS.txt).
+
+## Build it yourself
+
+For another header or palette, use Python 3.10+:
 
 ```sh
 python tools/dual.py --label CLAUDE --output local/dual
