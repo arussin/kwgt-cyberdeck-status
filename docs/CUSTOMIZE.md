@@ -10,7 +10,7 @@ The current themes draw their pixel lettering with native shapes. **“CODEX WEE
 | “PC DATA” footer label | Rebuild with `--source-label` below. |
 | What the percentage measures | Supply another feed using the [existing JSON fields](CUSTOM_CONNECTORS.md). |
 | Which object of the feed is shown | Rebuild with `--field` below. |
-| Two readings in one card | Build the experimental [Ember Dual](DUAL.md). |
+| Two readings in one card | Build the experimental [Ember Dual](DUAL.md) or [Data Cassette](CASSETTE.md). |
 | Field names, units, low/full rules or reset wording | Advanced source/formula changes; these are not exposed as simple Globals controls. |
 
 ## Change the pixel title

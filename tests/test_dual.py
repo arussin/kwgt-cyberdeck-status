@@ -21,7 +21,7 @@ def load(name):
     spec.loader.exec_module(module)
     return module
 
-build, dual, preview = load('build'), load('dual'), load('dual_preview')
+build, dual, preview = load('build'), load('dual'), load('preview')
 
 def formulas(item):
     return item.get('internal_formulas', {})
@@ -164,8 +164,8 @@ class DualTests(unittest.TestCase):
     def test_preview_draws_every_visible_module(self):
         for name, sample in preview.SAMPLES.items():
             with self.subTest(sample=name):
-                svg = preview.draw('CLAUDE', 'ember', sample)
-                self.assertTrue(svg.startswith('<svg ')); self.assertGreater(svg.count('<rect '), 400)
+                svg = preview.draw('dual', 'CLAUDE', 'ember', sample)
+                self.assertTrue(svg.startswith('<svg ')); self.assertGreater(svg.count('<polygon '), 400)
 
 if __name__ == '__main__':
     unittest.main()

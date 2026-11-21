@@ -31,6 +31,9 @@ Each of the six themes shows one percentage. Two additions cover feeds that carr
 
 - **Another object of the feed.** `python tools/build.py --field fiveHour --label "CLAUDE 5 HOUR"` rebuilds the themes to read the feed's `fiveHour` object in place of `weekly`. [Options](docs/CUSTOMIZE.md).
 - **Ember Dual (experimental).** One card with the five-hour and weekly reserves stacked, built by `tools/dual.py`. [Details and status](docs/DUAL.md).
+- **Data Cassette (experimental).** A cassette in a deck with one reel per reserve; tape winds off as the reserve is used. Built by `tools/cassette.py`. [Details and status](docs/CASSETTE.md).
+
+![Data Cassette layout with sample data](previews/Data_Cassette_Layout_Preview.png)
 
 The [Windows tray](https://github.com/arussin/codex-usage) can also export Claude plan limits as `claude.json` beside `usage.json`; point a widget's Source at that file.
 

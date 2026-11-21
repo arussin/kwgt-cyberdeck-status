@@ -1,9 +1,16 @@
 # Changelog
 
+## Data Cassette - 2026-11-21
+
+- New experimental **Data Cassette**: a cassette in a deck with one reel per reserve. Tape winds off a reel in twenty steps as its reserve is used; the paper label lists both reset times. Composed by `tools/cassette.py` from Phosphor Classic's formulas. A reel is the theme's twenty meter cells drawn as stacked discs.
+- One new formula turns the reel hubs each minute. Everything else is reused.
+- `tools/preview.py` now draws either generated design (`--design dual` or `--design cassette`) and replaces `tools/dual_preview.py`.
+- Eleven new offline tests (60 total passing). They do not run KWGT. **Not confirmed on a phone yet.**
+
 ## Second feed object and Ember Dual - 2026-11-21
 
 - `tools/build.py --field <name>` rebuilds the six themes to read another object of the feed, such as `fiveHour`, in place of `weekly`. Only the feed paths and the preset identity change.
-- New experimental **Ember Dual**: one card with the five-hour and weekly reserves stacked, composed by `tools/dual.py` from Phosphor Classic's formulas with a new layout and a warm palette. `tools/dual_preview.py` draws it offline with sample data.
+- New experimental **Ember Dual**: one card with the five-hour and weekly reserves stacked, composed by `tools/dual.py` from Phosphor Classic's formulas with a new layout and a warm palette. `tools/preview.py` draws it offline with sample data.
 - The six published presets, their sources and checksums are unchanged.
 - Thirteen new offline tests (49 total passing). They compare the generated formulas with the theme they come from and check structure, layout bounds and archive reproducibility. They do not run KWGT. **Neither addition has been confirmed on a phone yet.**
 

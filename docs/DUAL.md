@@ -4,7 +4,7 @@
 
 ![Ember Dual layout with sample data](../previews/Ember_Dual_Layout_Preview.png)
 
-*Layout preview drawn offline from sample data by `tools/dual_preview.py`. It is not a phone screenshot.*
+*Layout preview drawn offline from sample data by `tools/preview.py`. It is not a phone screenshot.*
 
 ## What it needs
 
@@ -33,7 +33,7 @@ Import `local/dual/Ember_Dual_CLAUDE.kwgt` into KWGT, set **Globals → Source**
 To review a layout change without a phone:
 
 ```sh
-python tools/dual_preview.py --label CLAUDE --output local/dual
+python tools/preview.py --design dual --label CLAUDE --output local/dual
 ```
 
 That writes two SVG files with sample readings, one normal and one with a low and a full row.
