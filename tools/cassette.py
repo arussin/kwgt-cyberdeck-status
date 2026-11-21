@@ -26,10 +26,10 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build  # noqa: E402  (sibling modules; tools/ is not a package)
 import dual  # noqa: E402
+from dual import ANCHORS, box, number, polygon, shape  # noqa: E402
 
 ROOT = build.ROOT
 ASSETS = ROOT/'cassette'
-ANCHORS = 'M0 0L0 0M100 100L100 100'  # keeps a path's 0..100 box, as every theme path does
 PIXEL = 4.0  # one drawn pixel, in the 1440 x 600 design space
 
 # Fixed colours of the cassette itself. None of them is a Phosphor colour, so the palette
@@ -53,10 +53,6 @@ HUB_FORMULA = ('$lv(f,mu(floor,df(S)/60)-3*mu(floor,mu(floor,df(S)/60)/3))$'
                '$if(lv(f)=0,gv(hub0),lv(f)=1,gv(hub1),gv(hub2))$')
 
 
-def number(value: float) -> str:
-    return f'{value:.4f}'.rstrip('0').rstrip('.') or '0'
-
-
 def disc(radius: float) -> str:
     """A pixel-art disc filling its square box, drawn as horizontal slabs (M/h/v/Z only)."""
     rows = max(2, round(2 * radius / PIXEL))
@@ -69,13 +65,6 @@ def disc(radius: float) -> str:
     return ''.join(parts)
 
 
-def polygon(points: list[tuple[float, float]]) -> str:
-    """A closed outline in the 0..100 box of its module (M/L/Z only)."""
-    first, *rest = points
-    return (f'M{number(first[0])} {number(first[1])}'
-            + ''.join(f'L{number(x)} {number(y)}' for x, y in rest) + 'Z')
-
-
 def hub_teeth(turn: float) -> str:
     """Three drive teeth around the hub hole, rotated by `turn` degrees."""
     parts = [ANCHORS]
@@ -86,24 +75,6 @@ def hub_teeth(turn: float) -> str:
         parts.append(polygon([(50 + r * along[0] + w * across[0], 50 + r * along[1] + w * across[1])
                               for r, w in corners]))
     return ''.join(parts)
-
-
-def shape(title: str, colour: str, path: str | None = None, corners: float = 0) -> dict:
-    item = {'internal_type': 'ShapeModule', 'internal_title': title, 'position_anchor': 'TOPLEFT',
-            'shape_type': 'PATH' if path else 'RECT', 'paint_color': colour}
-    if path:
-        item['shape_path'] = path
-    else:
-        item['shape_corners'] = corners
-    return item
-
-
-def box(title: str, colour: str, x: float, y: float, width: float, height: float, corners: float = 0) -> dict:
-    item = dual.geometry(shape(title, colour, corners=corners / 2), x, y, width, height)
-    if corners:
-        item['internal_formulas']['shape_corners'] = f'${corners:g}*{dual.SCALE}$'
-        item['internal_toggles']['shape_corners'] = 10
-    return item
 
 
 def disc_at(title: str, colour: str, x: float, y: float, radius: float) -> dict:
