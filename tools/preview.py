@@ -26,12 +26,14 @@ SAMPLES = {
     'normal': {
         'age': 'PC DATA · 3M OLD', 'fetch': 'TAP / FETCH',
         '5H': {'percent': 58, 'state': 'REMAINING', 'reset': 'SAT 8:30 PM', 'time': 0.46},
-        '7D': {'percent': 92, 'state': 'REMAINING', 'reset': 'MON · NOV 23 · 10:00 AM', 'time': 0.27},
+        '7D': {'percent': 59, 'state': 'REMAINING', 'reset': 'MON · NOV 23 · 10:00 AM', 'time': 0.12},
+        'scoped': {'label': 'FABLE', 'percent': 19},
     },
     'low': {
         'age': 'PC DATA · 12M OLD', 'fetch': 'TAP / FETCH',
         '5H': {'percent': 8, 'state': 'LOW RESERVE', 'reset': 'SAT 11:45 PM', 'time': 0.35},
         '7D': {'percent': 100, 'state': 'FULL', 'reset': 'WED · NOV 25 · 10:39 PM', 'time': 0.98},
+        'scoped': {'label': 'FABLE', 'percent': 6},
     },
 }
 
@@ -134,6 +136,15 @@ def render(data: dict, mapping: dict, sample: dict) -> str:
             shape_path = glyph(reading['reset'][index:index + 1] or ' ', False)
         elif family:  # a meter cell or a reel step
             fill = metric_colour(reading['percent'], FILLED) if index < cells(reading['percent']) else EMPTY
+        elif '/ SCOPED ' in title:  # the per-model limit's place along the weekly meter
+            scoped = sample['scoped']
+            layout = [layout[0] + scoped['percent'] / 100 * dual.METER_WIDTH, layout[1], layout[2], layout[3]]
+            fill = dual.INK if title.endswith('shadow') else LOW if scoped['percent'] < 10 else BRIGHT
+        elif title.startswith('SCOPED / READOUT'):
+            scoped = sample['scoped']
+            words = 'MARK={label} {percent}%'.format(**scoped)
+            fill = LOW if scoped['percent'] < 10 else LABEL
+            shape_path = glyph(words[index:index + 1] or ' ', False)
         elif title.endswith('/ TIME LEFT'):  # as long as the share of the window still to run
             layout = [layout[0], layout[1], layout[2] * reading['time'], layout[3]]
             fill = ALERT if reading['percent'] < reading['time'] * 100 else LABEL
