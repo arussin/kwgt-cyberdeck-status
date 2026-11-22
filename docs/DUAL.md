@@ -94,4 +94,4 @@ The offline tests check that the weekly row's formulas are identical to Phosphor
 
 They do not run Kustom. On 2026-11-21 the user loaded this card on his phone, with the CLAUDE label and the Ember palette, and confirmed that it works and shows his readings. That is one device and one build. Individual parts were not checked one by one: the time line's colour change, the held snapshot after a tap, and speed over a longer period, with about 150 live modules where the other themes have about 100, are still worth watching. Other labels, the Phosphor palette and other devices are untested.
 
-The per-model needle and footer text were added on 2026-11-22, after that phone check. They have not been confirmed on a phone yet.
+The per-model needle and footer text were added on 2026-11-22. The user loaded that build on the same phone the same day, with a feed carrying `weeklyScoped`, and confirmed that it works. The yellow state below 10% and the behaviour with only an old snapshot to show were not seen in that check.

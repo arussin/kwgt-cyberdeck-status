@@ -5,7 +5,8 @@
 - Ember Dual can show a weekly limit that applies to one model, which can run out well before the all-models one. A thin needle marks its level on the lower meter, and the footer names it with its percentage, for example `MARK=FABLE 19%`. No new row.
 - It reads an optional `weeklyScoped` object in the feed. Without that object nothing appears and nothing else changes.
 - The formulas are the theme's percentage formulas plus one step for the needle's position and two for the footer wording.
-- The published Ember Dual downloads are rebuilt. Two new offline tests (65 total passing). They do not run KWGT. **Not confirmed on a phone yet.**
+- The published Ember Dual downloads are rebuilt. Two new offline tests (65 total passing). They do not run KWGT.
+- Confirmed working on the user's phone the same day. [What that covers](docs/DUAL.md#what-is-verified).
 
 ## Ember Dual reworked - 2026-11-21
 
