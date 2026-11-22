@@ -4,8 +4,9 @@
 Almost nothing here is hand-written Kustom logic. Percentages, state words, reset times,
 meter colours and the tap action are taken from the Phosphor Classic source, the theme
 checked on a phone, and only three things change: where a module sits, which colours it
-uses, and which object of the feed the upper row reads. The one addition is the thin line
-under each meter that shows how much of the window's time is left; see `time_left`.
+uses, and which object of the feed the upper row reads. The additions are the thin line
+under each meter that shows how much of the window's time is left (see `time_left`) and the
+needle that marks a per-model weekly limit on the weekly meter (see `scoped_marker`).
 The feed needs both a `fiveHour` and a `weekly` object; see docs/DUAL.md.
 
 Python 3.10+, standard library only. Does not call any service or change your phone.
@@ -51,6 +52,7 @@ EMBER = {
 PALETTES = {'ember': EMBER, 'phosphor': {}}
 # Phosphor roles used for parts this file adds; they are recoloured with everything else.
 LABEL, DIM, RULE, TRACK, ALERT, FILLED = '#FFBACDBF', '#FF81998A', '#FF536A5C', '#FF27382F', '#FFFF845F', '#FFAAE3BB'
+BRIGHT, LOW = '#FFD5F1D2', '#FFFFC36E'
 INK = '#FF15100E'  # text on a filled plate; the Ember screen colour, and no Phosphor colour
 
 # Layout in the 1440 x 600 design space every theme uses. Row y is the top of its digits.
@@ -64,6 +66,11 @@ LEGEND = 'BAR=QUOTA LINE=TIME'
 STATE_CELLS = 13
 AGE_CELLS = 23
 FETCH_CELLS = 12
+SCOPED_CELLS = 16
+SCOPED_FIELD = 'weeklyScoped'
+# The tap snapshot holds eight fields, numbered 0 to 7. Pointing the per-model limit at slots past
+# the end makes its held values empty, so it shows nothing rather than another limit's old reading.
+SCOPED_HELD = {1: 8, 2: 9, 3: 10}
 METER_X, METER_WIDTH, CELL_PITCH, CELL_WIDTH, CELL_HEIGHT = 548, 800, 40, 48, 56
 SLANT = 29.0  # how far a meter segment leans, as a share of its box width
 
@@ -95,11 +102,11 @@ def geometry(item: dict, x: float, y: float, width: float, height: float) -> dic
     return item
 
 
-def read_field(item: dict, field: str) -> dict:
+def read_field(item: dict, field: str, held: dict | None = None) -> dict:
     """Point a weekly module at another feed object and at that object's held snapshot."""
     if field == 'weekly':
         return item
-    held = {1: 5, 2: 6, 3: 7}  # weekly quota/available/reset -> the second set of latch fields
+    held = held or {1: 5, 2: 6, 3: 7}  # weekly quota/available/reset -> the second set of latch fields
     for key, formula in item.get('internal_formulas', {}).items():
         for old, new in held.items():
             formula = formula.replace(f'tc(split,gv(latch),"~",{old}))', f'tc(split,gv(latch),"~",{new}))')
@@ -133,6 +140,81 @@ def static_text(data: dict, text: str, title: str, colour: str) -> dict:
     return item
 
 
+def statements(formula: str) -> list[str]:
+    """The steps of a theme formula, which is written as $step$$step$...$result$."""
+    return formula[1:-1].split('$$')
+
+
+def through(formula: str, name: str) -> list[str]:
+    """A theme formula's steps up to and including the one that defines `name`."""
+    steps = statements(formula)
+    return steps[:1 + next(index for index, step in enumerate(steps) if step.startswith(f'lv({name},'))]
+
+
+def join(steps: list[str]) -> str:
+    return '$' + '$$'.join(steps) + '$'
+
+
+def scoped_marker(by_title: dict, top: float) -> list[dict]:
+    """The per-model weekly limit as a needle on the weekly meter, with its name and value in the footer.
+
+    A feed may carry a `weeklyScoped` object: a weekly limit that applies to one model and can
+    run out before the all-models one. This shows it without a third row. Every formula starts
+    from the theme's own percentage formulas, read from `.weeklyScoped.`; the additions are the
+    needle's position along the meter and the footer wording. With no such object in the feed,
+    or only a held snapshot to show, the needle and the text are simply absent.
+    """
+    percent = by_title['LIVE PERCENT / 1']['internal_formulas']
+    checked = through(percent['paint_color'], 'ok')
+    fresh = through(percent['paint_color'], 'fresh')
+    shown = through(percent['shape_path'], 'show')
+    glyphs = statements(by_title['QUOTA / DATA STATE / 01']['internal_formulas']['shape_path'])[-1]
+    # How far along the meter the limit sits, as its own step so the position reads like the theme's own sums.
+    level = 'lv(level,if(lv(ok)=1,lv(q)+0,0))'
+
+    def moved(title: str, colour: str, path: str, x: float, y: float, width: float, height: float, paint: str) -> dict:
+        item = geometry(shape(title, colour, path=ANCHORS + path), x, y, width, height)
+        item['internal_formulas']['position_offset_x'] = join(
+            checked + [level, f'(si(rwidth)-1440*{SCALE})/2+(({x:g})+lv(level)*{METER_WIDTH / 100:g})*{SCALE}'])
+        item['internal_formulas']['paint_color'] = paint
+        item['internal_toggles']['paint_color'] = 10
+        return read_field(item, SCOPED_FIELD, SCOPED_HELD)
+
+    # The needle leans with the meter segments. A dark twin behind it keeps it visible on any segment colour.
+    slope = (SLANT / 100 * CELL_WIDTH) / CELL_HEIGHT
+    tall = CELL_HEIGHT + 12
+    run = slope * tall
+    lean = SLANT / 100 * CELL_WIDTH / 2  # where a segment's edge sits at mid-height
+
+    def needle(thick: float) -> tuple[str, float]:
+        wide = run + thick
+        return polygon([(run / wide * 100, 0), (100, 0), (thick / wide * 100, 100), (0, 100)]), wide
+
+    colour = join(fresh + [f'if(lv(ok)!=1,"#00000000",lv(q)+0<10,"{LOW}",lv(fresh)!=1,"{DIM}","{BRIGHT}")'])
+    shadow = join(checked + [f'if(lv(ok)!=1,"#00000000","{INK}")'])
+    outline, outline_wide = needle(11)
+    body, body_wide = needle(5)
+    items = [
+        moved('7D / SCOPED shadow', INK, outline, METER_X + lean - outline_wide / 2, top - 6, outline_wide, tall, shadow),
+        moved('7D / SCOPED needle', BRIGHT, body, METER_X + lean - body_wide / 2, top - 6, body_wide, tall, colour),
+        moved('7D / SCOPED cap', BRIGHT, polygon([(0, 0), (100, 0), (50, 100)]),
+              METER_X + lean + run / 2 - 9, top - 19, 18, 12, colour),
+    ]
+
+    # Footer: MARK=<the feed's label> <value>%, drawn with the theme's alphabet one character per cell.
+    words = [f'lv(name,tc(up,wg(lv(readurl),json,".{SCOPED_FIELD}.label")))',
+             'lv(words,if(lv(ok)=1,"MARK="+lv(name)+" "+lv(show),""))']
+    text_colour = join(checked + [f'if(lv(ok)=1 & lv(q)+0<10,"{LOW}","{LABEL}")'])
+    for index in range(SCOPED_CELLS):
+        cell = geometry(shape(f'SCOPED / READOUT / {index + 1:02d}', LABEL, path=ANCHORS),
+                        520 + 21 * index, 500, 21, 28)
+        cell['internal_formulas']['shape_path'] = join(shown + words + [f'lv(c,tc(cut,lv(words),{index},1))', glyphs])
+        cell['internal_formulas']['paint_color'] = text_colour
+        cell['internal_toggles'].update({'shape_path': 10, 'paint_color': 10})
+        items.append(read_field(cell, SCOPED_FIELD, SCOPED_HELD))
+    return items
+
+
 def time_left(reset_formula: str, seconds: int) -> tuple[str, str]:
     """Width and colour formulas for the line showing how much of a window's time is left.
 
@@ -142,13 +224,10 @@ def time_left(reset_formula: str, seconds: int) -> tuple[str, str]:
     of the meter, and turns to the alert colour when the reserve left is smaller than the time
     left, which means the reserve is being used faster than the clock.
     """
-    statements = reset_formula[1:-1].split('$$')
-    end = next(index for index, statement in enumerate(statements) if statement.startswith('lv(rgood,'))
-    head = statements[:end + 1] + [
+    head = through(reset_formula, 'rgood') + [
         f'lv(left,if(lv(rgood)=1,mu(max,0,mu(min,1,(df(S,dp(lv(riso),auto))-df(S))/{seconds})),0))']
-    width = '$' + '$$'.join(head + [f'lv(left)*{METER_WIDTH}*{SCALE}']) + '$'
-    colour = '$' + '$$'.join(
-        head + [f'if(lv(rgood)!=1,"{DIM}",(lv(q)+0)<lv(left)*100,"{ALERT}","{LABEL}")']) + '$'
+    width = join(head + [f'lv(left)*{METER_WIDTH}*{SCALE}'])
+    colour = join(head + [f'if(lv(rgood)!=1,"{DIM}",(lv(q)+0)<lv(left)*100,"{ALERT}","{LABEL}")'])
     return width, colour
 
 
@@ -263,6 +342,7 @@ def compose(label: str = 'USAGE', palette: str = 'ember') -> dict:
             cell['internal_formulas']['shape_path'] = cell['internal_formulas']['shape_path'].replace(
                 f'df("{WEEKLY_RESET_FORMAT}"', f'df("{row["reset_format"]}"')
 
+    items += scoped_marker(by_title, ROWS[1]['y'])
     items.append(part('13 / NATIVE SCANLINES'))
     items[-1]['internal_title'] = 'SCANLINES'
     body = geometry(part('TOUCH / body requests fresh web data'), 20, 134, 1400, 444)

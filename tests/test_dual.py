@@ -116,6 +116,81 @@ class DualTests(unittest.TestCase):
             self.assertEqual(line['layout'][2], dual.METER_WIDTH)
         self.assertEqual([row['seconds'] for row in dual.ROWS], [18000, 604800])
 
+    def scoped_to_weekly(self, formula):
+        """Undo the documented differences of a per-model limit module."""
+        return (formula.replace('".weeklyScoped.', '".weekly.')
+                .replace('gv(latch),"~",8))', 'gv(latch),"~",1))')
+                .replace('gv(latch),"~",9))', 'gv(latch),"~",2))')
+                .replace('gv(latch),"~",10))', 'gv(latch),"~",3))'))
+
+    def check_added_steps(self, formula, added):
+        donor_text = json.dumps(self.donor)
+        for function in re.findall(r'\b([a-z]{2})\(', '$$'.join(added)):
+            self.assertIn(function + '(', donor_text)  # only functions the themes already use
+        defined = set(re.findall(r'lv\((\w+),', formula))
+        self.assertLessEqual(set(re.findall(r'lv\((\w+)\)', formula)), defined)
+        self.assertEqual(formula.count('('), formula.count(')'))
+        self.assertNotIn('.weekly.', formula)
+        # Its held values point past the end of the snapshot, so it never shows another limit's old reading.
+        self.assertNotRegex(formula, r'gv\(latch\),"~",[123567]\)\)')
+        self.assertIn('lv(tap,tc(split,gv(latch),"~",0)+0)', formula)
+
+    def test_model_limit_needle_extends_the_theme_percentage_formulas(self):
+        percent = formulas(self.donor_items['LIVE PERCENT / 1'])
+        checked = dual.through(percent['paint_color'], 'ok')
+        fresh = dual.through(percent['paint_color'], 'fresh')
+        weekly_top = dual.ROWS[1]['y']
+        for title in ('7D / SCOPED shadow', '7D / SCOPED needle', '7D / SCOPED cap'):
+            with self.subTest(module=title):
+                item = self.items[title]
+                x, y, width, height = item['layout']
+                position = dual.statements(self.scoped_to_weekly(formulas(item)['position_offset_x']))
+                self.assertEqual(position[:len(checked)], checked)  # the theme's validated reading, untouched
+                self.assertEqual(position[len(checked):], [
+                    'lv(level,if(lv(ok)=1,lv(q)+0,0))',
+                    f'(si(rwidth)-1440*{dual.SCALE})/2+(({x:g})+lv(level)*8)*{dual.SCALE}'])
+                colour = dual.statements(self.scoped_to_weekly(formulas(item)['paint_color']))
+                if title.endswith('shadow'):
+                    self.assertEqual(colour, checked + [f'if(lv(ok)!=1,"#00000000","{dual.INK}")'])
+                else:
+                    self.assertEqual(colour, fresh + [
+                        f'if(lv(ok)!=1,"#00000000",lv(q)+0<10,"{dual.LOW}",lv(fresh)!=1,"{dual.DIM}","{dual.BRIGHT}")'])
+                for key in ('position_offset_x', 'paint_color'):
+                    self.assertEqual(item['internal_toggles'][key], 10)
+                    self.check_added_steps(formulas(item)[key], dual.statements(formulas(item)[key])[len(checked):])
+                # From empty to full it stays over the weekly meter and inside the card.
+                self.assertGreaterEqual(x, dual.METER_X - 12); self.assertLessEqual(x + dual.METER_WIDTH + width, 1380)
+                self.assertGreater(y, weekly_top - 24); self.assertLess(y + height, weekly_top + dual.CELL_HEIGHT + 10)
+        self.assertEqual(dual.METER_WIDTH / 100, 8)
+        order = [i['internal_title'] for i in self.plain['preset_root']['viewgroup_items']]
+        self.assertLess(order.index('7D / SCOPED shadow'), order.index('7D / SCOPED needle'))
+        self.assertGreater(order.index('7D / SCOPED shadow'), order.index('7D / CELL 20 of 20'))  # drawn over the meter
+
+    def test_model_limit_footer_text_spells_the_feed_label_and_value(self):
+        percent = formulas(self.donor_items['LIVE PERCENT / 1'])
+        shown = dual.through(percent['shape_path'], 'show')
+        checked = dual.through(percent['paint_color'], 'ok')
+        glyphs = dual.statements(formulas(self.donor_items['QUOTA / DATA STATE / 01'])['shape_path'])[-1]
+        cells = [self.items[f'SCOPED / READOUT / {n:02d}'] for n in range(1, dual.SCOPED_CELLS + 1)]
+        self.assertGreaterEqual(dual.SCOPED_CELLS, len('MARK=SONNET 100%'))
+        for index, cell in enumerate(cells):
+            with self.subTest(cell=index + 1):
+                steps = dual.statements(self.scoped_to_weekly(formulas(cell)['shape_path']))
+                self.assertEqual(steps[:len(shown)], shown)
+                self.assertEqual(steps[len(shown):], [
+                    'lv(name,tc(up,wg(lv(readurl),json,".weekly.label")))',
+                    'lv(words,if(lv(ok)=1,"MARK="+lv(name)+" "+lv(show),""))',
+                    f'lv(c,tc(cut,lv(words),{index},1))',
+                    glyphs])
+                self.assertIn('".weeklyScoped.label"', formulas(cell)['shape_path'])
+                self.check_added_steps(formulas(cell)['shape_path'],
+                                       dual.statements(formulas(cell)['shape_path'])[len(shown):-1])
+                colour = dual.statements(self.scoped_to_weekly(formulas(cell)['paint_color']))
+                self.assertEqual(colour, checked + [f'if(lv(ok)=1 & lv(q)+0<10,"{dual.LOW}","{dual.LABEL}")'])
+        lefts = [cell['layout'][0] for cell in cells]
+        self.assertEqual(lefts, sorted(lefts))
+        self.assertEqual(len({cell['layout'][1] for cell in cells}), 1)
+
     def test_one_tap_action_captures_both_rows(self):
         root = self.plain['preset_root']
         touch = self.items['TOUCH / body requests fresh web data']
@@ -185,7 +260,7 @@ class DualTests(unittest.TestCase):
                 self.assertGreaterEqual(x, 60); self.assertLessEqual(x + width, 1380)
                 self.assertGreaterEqual(y, 56); self.assertLessEqual(y + height, 544)
         text = [(t, box) for t, box in placed
-                if re.search(r'PERCENT|STATE|RESET /|AGE|FETCH|resets tag|plate text|HEADER / [A-Z]+$|legend', t)]
+                if re.search(r'PERCENT|STATE|RESET /|AGE|FETCH|READOUT|resets tag|plate text|HEADER / [A-Z]+$|legend', t)]
         self.assertGreater(len(text), 100)
         for index, (title, (x, y, width, height)) in enumerate(text):
             for other, (ox, oy, ow, oh) in text[index + 1:]:
