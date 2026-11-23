@@ -30,7 +30,7 @@ Inspired by **[Tooblippe's Codex Usage Tray](https://github.com/Tooblippe/codex-
 Each of the six themes shows one percentage. Two additions cover feeds that carry more:
 
 - **Another object of the feed.** `python tools/build.py --field fiveHour --label "CLAUDE 5 HOUR"` rebuilds the themes to read the feed's `fiveHour` object in place of `weekly`. [Options](docs/CUSTOMIZE.md).
-- **Ember Dual (experimental).** One card with the five-hour and weekly reserves stacked, each with a line showing the time left in its window. Built by `tools/dual.py`. [Details and status](docs/DUAL.md).
+- **Ember Dual (experimental).** One card with the five-hour and weekly reserves stacked, each with a line showing the time left in its window. Where there is no five-hour limit, the upper row can show one model's weekly limit instead. Built by `tools/dual.py`. [Details and status](docs/DUAL.md).
 - **Data Cassette (experimental).** A more playful take: a cassette in a deck with one reel per reserve. Built by `tools/cassette.py`. [Details and status](docs/CASSETTE.md).
 
 ![Ember Dual layout with sample data](previews/Ember_Dual_Layout_Preview.png)

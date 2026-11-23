@@ -1,5 +1,14 @@
 # Changelog
 
+## Ember Dual without a five-hour limit - 2026-11-23
+
+- For an account that has no five-hour limit, `tools/dual.py --upper weeklyScoped --upper-tag FBL` gives the upper row to the weekly limit of one model. The lower row stays the all-models weekly limit, and its plate says `ALL`.
+- That layout leaves out the needle and the `MARK=` footer text added on 2026-11-22, because the upper row already shows the same limit. It has fewer modules than the five-hour layout.
+- No new Kustom formula: the upper row is built the way the five-hour row is, reading a different feed object.
+- The default five-hour layout and the published downloads are unchanged. `tools/preview.py` takes the same two options.
+- Ten new offline tests (75 total passing). They do not run KWGT.
+- Confirmed working on the user's phone the same day. [What that covers](docs/DUAL.md#what-is-verified).
+
 ## Per-model limit on Ember Dual - 2026-11-22
 
 - Ember Dual can show a weekly limit that applies to one model, which can run out well before the all-models one. A thin needle marks its level on the lower meter, and the footer names it with its percentage, for example `MARK=FABLE 19%`. No new row.

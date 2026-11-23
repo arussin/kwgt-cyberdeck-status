@@ -22,18 +22,32 @@ LOW, ALERT, FULL = '#FFFFC36E', '#FFFF845F', '#FFC6FFCE'
 ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789:·-/[].+><%|!='
 DIGITS = '0123456789%-<'
 
+# 'upper' and 'lower' are the two rows of Ember Dual (the left and right reel of the cassette).
 SAMPLES = {
     'normal': {
         'age': 'PC DATA · 3M OLD', 'fetch': 'TAP / FETCH',
-        '5H': {'percent': 58, 'state': 'REMAINING', 'reset': 'SAT 8:30 PM', 'time': 0.46},
-        '7D': {'percent': 59, 'state': 'REMAINING', 'reset': 'MON · NOV 23 · 10:00 AM', 'time': 0.12},
+        'upper': {'percent': 58, 'state': 'REMAINING', 'reset': 'SAT 8:30 PM', 'time': 0.46},
+        'lower': {'percent': 59, 'state': 'REMAINING', 'reset': 'MON · NOV 23 · 10:00 AM', 'time': 0.12},
         'scoped': {'label': 'FABLE', 'percent': 19},
     },
     'low': {
         'age': 'PC DATA · 12M OLD', 'fetch': 'TAP / FETCH',
-        '5H': {'percent': 8, 'state': 'LOW RESERVE', 'reset': 'SAT 11:45 PM', 'time': 0.35},
-        '7D': {'percent': 100, 'state': 'FULL', 'reset': 'WED · NOV 25 · 10:39 PM', 'time': 0.98},
+        'upper': {'percent': 8, 'state': 'LOW RESERVE', 'reset': 'SAT 11:45 PM', 'time': 0.35},
+        'lower': {'percent': 100, 'state': 'FULL', 'reset': 'WED · NOV 25 · 10:39 PM', 'time': 0.98},
         'scoped': {'label': 'FABLE', 'percent': 6},
+    },
+}
+# For Ember Dual with one model's weekly limit in the upper row: both rows are seven-day windows.
+MODEL_SAMPLES = {
+    'normal': {
+        'age': 'PC DATA · 3M OLD', 'fetch': 'TAP / FETCH',
+        'upper': {'percent': 41, 'state': 'REMAINING', 'reset': 'MON · NOV 30 · 10:00 AM', 'time': 0.62},
+        'lower': {'percent': 78, 'state': 'REMAINING', 'reset': 'MON · NOV 30 · 10:00 AM', 'time': 0.62},
+    },
+    'low': {
+        'age': 'PC DATA · 12M OLD', 'fetch': 'TAP / FETCH',
+        'upper': {'percent': 7, 'state': 'LOW RESERVE', 'reset': 'MON · NOV 30 · 10:00 AM', 'time': 0.31},
+        'lower': {'percent': 52, 'state': 'REMAINING', 'reset': 'MON · NOV 30 · 10:00 AM', 'time': 0.31},
     },
 }
 
@@ -78,9 +92,12 @@ def metric_colour(percent: int, normal: str) -> str:
     return LOW if percent < 10 else FULL if percent == 100 else normal
 
 
-def render(data: dict, mapping: dict, sample: dict) -> str:
-    """Draw a composed design (with its preview hints) for one sample state."""
+def render(data: dict, mapping: dict, sample: dict, tags: tuple[str, str] = ('5H', '7D')) -> str:
+    """Draw a composed design (with its preview hints) for one sample state.
+
+    `tags` are the title prefixes of the design's two readings, in the order upper, lower."""
     globals_ = data['preset_root']['globals_list']
+    readings = dict(zip(tags, (sample['upper'], sample['lower'])))
     shapes: list[str] = []
 
     def colour(value: str) -> tuple[str, float]:
@@ -114,7 +131,7 @@ def render(data: dict, mapping: dict, sample: dict) -> str:
             layout = layout if item['shape_type'] == 'RECT' else [0, 0, 1440, 600]
         formulas = item.get('internal_formulas', {})
         painted = 'paint_color' in formulas  # otherwise the stored colour is the colour
-        reading = sample.get(title.partition(' / ')[0])
+        reading = readings.get(title.partition(' / ')[0])
         family = re.search(r'/ (PERCENT|STATE|RESET|CELL|REEL)\b', title)
         index = int(match.group(1)) - 1 if (match := re.search(r'(\d+)(?: of 20)?$', title)) else 0
         fill, shape_path = item['paint_color'], item.get('shape_path')
@@ -159,8 +176,15 @@ def render(data: dict, mapping: dict, sample: dict) -> str:
             + '\n'.join(shapes) + '\n</svg>\n')
 
 
-def draw(design: str, label: str, palette: str, sample: dict) -> str:
-    return render(DESIGNS[design](label, palette), dual.PALETTES[palette], sample)
+def draw(design: str, label: str, palette: str, sample: dict, upper: str = 'fiveHour',
+         upper_tag: str | None = None) -> str:
+    """Draw one design. `upper` and `upper_tag` choose Ember Dual's upper row, as in tools/dual.py."""
+    if design != 'dual':
+        if upper != 'fiveHour' or upper_tag:
+            raise ValueError('Only Ember Dual has a choice of upper row.')
+        return render(DESIGNS[design](label, palette), dual.PALETTES[palette], sample)
+    tags = tuple(row['tag'] for row in dual.rows(upper, upper_tag))
+    return render(dual.compose(label, palette, upper, upper_tag), dual.PALETTES[palette], sample, tags)
 
 
 if __name__ == '__main__':
@@ -169,10 +193,18 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, default=dual.ROOT/'local'/'preview')
     parser.add_argument('--label', default='USAGE')
     parser.add_argument('--palette', default='ember', choices=sorted(dual.PALETTES))
+    parser.add_argument('--upper', default='fiveHour', choices=dual.UPPER_FIELDS,
+                        help='Ember Dual only: the feed object for the upper row.')
+    parser.add_argument('--upper-tag', help='Ember Dual with --upper weeklyScoped: the upper plate, e.g. FBL.')
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    for name, sample in SAMPLES.items():
-        target = args.output/f'{args.design}-{name}.svg'
-        target.write_text(draw(args.design, args.label, args.palette, sample), encoding='utf-8')
+    model = args.upper != 'fiveHour'
+    for name, sample in (MODEL_SAMPLES if model else SAMPLES).items():
+        target = args.output/f'{args.design}{"-model" if model else ""}-{name}.svg'
+        try:
+            svg = draw(args.design, args.label, args.palette, sample, args.upper, args.upper_tag)
+        except ValueError as error:
+            parser.exit(1, f'Preview failed: {error}\n')
+        target.write_text(svg, encoding='utf-8')
         print(f'Wrote {target}')
     print('Sample data only. This does not evaluate Kustom formulas or prove Android rendering.')

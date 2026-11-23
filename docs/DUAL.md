@@ -42,6 +42,20 @@ A feed can also carry a `weeklyScoped` object for a weekly limit on one model:
 
 It is optional. Without it, or while it is unavailable, the needle and the footer text do not appear and nothing else changes. The Windows tray writes it in `claude.json`.
 
+## If your account has no five-hour limit
+
+Then the upper row has nothing to show. Build the card with the per-model weekly limit in that row instead:
+
+```sh
+python tools/dual.py --label CLAUDE --upper weeklyScoped --upper-tag FBL --output local/dual
+```
+
+![Ember Dual with a per-model limit in the upper row, sample data](../previews/Ember_Dual_Model_Row_Preview.png)
+
+*Layout preview drawn offline from sample data. It is not a phone screenshot.*
+
+The upper row reads `weeklyScoped` and the lower row reads `weekly`, so the feed needs those two objects and `refreshedAt`. Both rows are seven-day windows with the full reset date. The upper plate carries the two or three characters you give with `--upper-tag` (`MDL` if you give none) and the lower plate says `ALL`. The needle and the `MARK=` text are left out, because the upper row already says what they said. The file is named after the tag, for example `Ember_Dual_CLAUDE_FBL.kwgt`, and is a separate preset from the five-hour one.
+
 ## Download it
 
 | Header | File |
@@ -83,6 +97,7 @@ That writes two SVG files with sample readings, one normal and one with a low an
 | Meter segments | The theme's twenty meter cells with their colour formulas unchanged, each drawn as a leaning native path instead of a box. |
 | Time line | A new formula. It starts from the theme's own reset-time formula, keeps everything up to the validated reset timestamp, and adds one step: the share of the window still to run. If it fails, the line is missing or wrong and nothing else is affected. |
 | Per-model limit | The theme's percentage formulas, read from `.weeklyScoped.`. One added step places the needle along the meter and two spell the footer text. Its held-snapshot slots are left empty on purpose, so with only an old snapshot to show it disappears instead of borrowing another limit's reading. If it fails, the needle or text is missing or wrong and nothing else is affected. |
+| Per-model limit as the upper row (`--upper weeklyScoped`) | No new formula. The upper row is built exactly as the five-hour row is, reading `.weeklyScoped.` in place of `.fiveHour.` and keeping the weekly reset format and seven-day time line. The tap action is the same action with that one name changed. |
 
 Both rows share one request URL and one source timestamp, so the card makes the same single download as the other themes. The body tap still runs one action. That action is the theme's own formula followed by a copy of its per-metric steps for the five-hour object, and it saves eight fields instead of five: request marker, weekly reading, source time, five-hour reading.
 
@@ -95,3 +110,5 @@ The offline tests check that the weekly row's formulas are identical to Phosphor
 They do not run Kustom. On 2026-11-21 the user loaded this card on his phone, with the CLAUDE label and the Ember palette, and confirmed that it works and shows his readings. That is one device and one build. Individual parts were not checked one by one: the time line's colour change, the held snapshot after a tap, and speed over a longer period, with about 150 live modules where the other themes have about 100, are still worth watching. Other labels, the Phosphor palette and other devices are untested.
 
 The per-model needle and footer text were added on 2026-11-22. The user loaded that build on the same phone the same day, with a feed carrying `weeklyScoped`, and confirmed that it works. The yellow state below 10% and the behaviour with only an old snapshot to show were not seen in that check.
+
+The layout with the per-model limit in the upper row was added on 2026-11-23. The offline tests check that its upper row differs from Phosphor Classic's weekly formulas only in the feed object and snapshot slots, that the needle, the footer text and every five-hour reading are gone, and that a three-character tag stays on its plate. The user loaded that build on the same phone the same day, with the `FBL` tag, the CLAUDE label and the Ember palette, and confirmed that it works. Other tags, and a feed that stops carrying `weeklyScoped`, were not seen in that check.

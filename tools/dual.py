@@ -9,6 +9,9 @@ under each meter that shows how much of the window's time is left (see `time_lef
 needle that marks a per-model weekly limit on the weekly meter (see `scoped_marker`).
 The feed needs both a `fiveHour` and a `weekly` object; see docs/DUAL.md.
 
+For an account with no five-hour limit, `--upper weeklyScoped` gives the upper row to the
+per-model weekly limit instead (see `rows`). The needle is then left out, because the row says it.
+
 Python 3.10+, standard library only. Does not call any service or change your phone.
 """
 from __future__ import annotations
@@ -73,6 +76,28 @@ SCOPED_FIELD = 'weeklyScoped'
 SCOPED_HELD = {1: 8, 2: 9, 3: 10}
 METER_X, METER_WIDTH, CELL_PITCH, CELL_WIDTH, CELL_HEIGHT = 548, 800, 40, 48, 56
 SLANT = 29.0  # how far a meter segment leans, as a share of its box width
+UPPER_FIELDS = ('fiveHour', SCOPED_FIELD)
+MODEL_TAG, ALL_MODELS_TAG = 'MDL', 'ALL'
+
+
+def rows(upper: str = 'fiveHour', upper_tag: str | None = None) -> tuple[dict, dict]:
+    """The card's two rows: five-hour above weekly, or one model's weekly limit above the all-models one.
+
+    The second layout is for an account that has no five-hour limit. Both of its rows are
+    seven-day windows, so the upper one keeps every weekly setting and changes only the feed
+    object it reads and the tag on its plate; the lower plate says ALL instead of 7D.
+    """
+    if upper not in UPPER_FIELDS:
+        raise ValueError('The upper row must read one of: ' + ', '.join(UPPER_FIELDS))
+    if upper == 'fiveHour':
+        if upper_tag:
+            raise ValueError('The upper tag can only be set together with --upper weeklyScoped.')
+        return ROWS
+    tag = (upper_tag or MODEL_TAG).upper()
+    if not re.fullmatch(r'[A-Z0-9]{2,3}', tag) or tag == ALL_MODELS_TAG:
+        raise ValueError(f'The upper tag must be two or three letters or digits, and not {ALL_MODELS_TAG}.')
+    weekly = ROWS[1]
+    return {**weekly, 'tag': tag, 'field': upper, 'y': ROWS[0]['y']}, {**weekly, 'tag': ALL_MODELS_TAG}
 
 
 def number(value: float) -> str:
@@ -231,12 +256,12 @@ def time_left(reset_formula: str, seconds: int) -> tuple[str, str]:
     return width, colour
 
 
-def dual_latch(event: dict) -> dict:
+def dual_latch(event: dict, field: str = 'fiveHour') -> dict:
     """Extend the tap action so one tap captures both rows' readings in one global.
 
     The action is the theme's own formula followed by a renamed copy of its per-metric
-    statements for the five-hour object. One action, so nothing depends on how Kustom
-    orders several touch actions on one module.
+    statements for the upper row's object (`field`). One action, so nothing depends on how
+    Kustom orders several touch actions on one module.
     """
     text = event['switch_text']
     statements = text[1:-1].split('$$')
@@ -256,7 +281,7 @@ def dual_latch(event: dict) -> dict:
             statement = statement.replace(f'lv({local})', f'lv({local}x)').replace(f'lv({local},', f'lv({local}x,')
         if name in held:
             statement = re.sub(r'"~",\d\)\)$', f'"~",{held[name]}))', statement)
-        second.append(statement.replace('".weekly.', '".fiveHour.'))
+        second.append(statement.replace('".weekly.', f'".{field}.'))
     if len(second) != len(per_metric):
         raise ValueError('The Phosphor Classic tap action changed; review tools/dual.py before building.')
     keep = lambda *names: '+"~"+'.join(f'lv({name})' for name in names)  # noqa: E731
@@ -266,10 +291,13 @@ def dual_latch(event: dict) -> dict:
     return {**event, 'switch_text': '$' + '$$'.join(body + second + [result]) + '$'}
 
 
-def compose(label: str = 'USAGE', palette: str = 'ember') -> dict:
+def compose(label: str = 'USAGE', palette: str = 'ember', upper: str = 'fiveHour',
+            upper_tag: str | None = None) -> dict:
     """Build the two-meter preset as a Python object, with preview hints still attached."""
     if palette not in PALETTES:
         raise ValueError('Palette must be one of: ' + ', '.join(sorted(PALETTES)))
+    layout = rows(upper, upper_tag)
+    model = upper != 'fiveHour'
     donor = json.loads((DONOR/'preset.json').read_text(encoding='utf-8'))
     root = donor['preset_root']
     by_title = {item['internal_title']: item for item in root['viewgroup_items']}
@@ -301,7 +329,7 @@ def compose(label: str = 'USAGE', palette: str = 'ember') -> dict:
     items.append(lamp)
 
     lean = polygon([(SLANT, 0), (100, 0), (100 - SLANT, 100), (0, 100)])
-    for row in ROWS:
+    for row in layout:
         tag, field, top = row['tag'], row['field'], row['y']
 
         def live(title: str, new_title: str, x: float, y: float, width: float, height: float) -> dict:
@@ -311,7 +339,10 @@ def compose(label: str = 'USAGE', palette: str = 'ember') -> dict:
             return cell
 
         items.append(box(f'{tag} / plate', FILLED, 76, top, 88, 94))
-        items.append(text(tag, f'{tag} / plate text', INK, 90, top + 26, 30, 44))
+        if len(tag) == 2:
+            items.append(text(tag, f'{tag} / plate text', INK, 90, top + 26, 30, 44))
+        else:  # three characters, drawn smaller so they fit the same plate
+            items.append(text(tag, f'{tag} / plate text', INK, 84, top + 30, 24, 35))
         for index in range(4):
             live(f'LIVE PERCENT / {index + 1}', f'PERCENT / {index + 1}', 184 + 78 * index, top, 78, 94)
         for index in range(STATE_CELLS):
@@ -342,11 +373,12 @@ def compose(label: str = 'USAGE', palette: str = 'ember') -> dict:
             cell['internal_formulas']['shape_path'] = cell['internal_formulas']['shape_path'].replace(
                 f'df("{WEEKLY_RESET_FORMAT}"', f'df("{row["reset_format"]}"')
 
-    items += scoped_marker(by_title, ROWS[1]['y'])
+    if not model:  # with the per-model limit in the upper row, a needle for it would only repeat that row
+        items += scoped_marker(by_title, layout[1]['y'])
     items.append(part('13 / NATIVE SCANLINES'))
     items[-1]['internal_title'] = 'SCANLINES'
     body = geometry(part('TOUCH / body requests fresh web data'), 20, 134, 1400, 444)
-    body['internal_events'] = [dual_latch(body['internal_events'][0])]
+    body['internal_events'] = [dual_latch(body['internal_events'][0], layout[0]['field'])]
     items.append(body)
     items.append(geometry(part('TOUCH / title opens KWGT editor'), 36, 26, 1368, 104))
 
@@ -354,14 +386,17 @@ def compose(label: str = 'USAGE', palette: str = 'ember') -> dict:
     globals_['source']['value'] = build.PLACEHOLDER
     globals_['latch']['value'] = EMPTY_LATCH
     info = copy.deepcopy(donor['preset_info'])
-    info['title'] = 'CD4.2 / Ember Dual / ' + label.upper()
-    info['description'] = ('Native two-meter cyberdeck status widget: five-hour and weekly reserve. '
-                           'Set source to your own endpoint. See repository README and docs/DUAL.md.')
-    info['id'] = uuid.uuid5(uuid.NAMESPACE_URL, info['id'] + ':dual:' + palette + ':' + label.upper()).hex
+    info['title'] = 'CD4.2 / Ember Dual / ' + label.upper() + (f' / {layout[0]["tag"]}' if model else '')
+    info['description'] = ('Native two-meter cyberdeck status widget: '
+                           + ("one model's weekly reserve and the all-models weekly reserve. " if model
+                              else 'five-hour and weekly reserve. ')
+                           + 'Set source to your own endpoint. See repository README and docs/DUAL.md.')
+    variant = f':upper:{upper}:{layout[0]["tag"]}' if model else ''
+    info['id'] = uuid.uuid5(uuid.NAMESPACE_URL, info['id'] + ':dual:' + palette + ':' + label.upper() + variant).hex
     data = {'preset_info': info,
             'preset_root': {'internal_type': root['internal_type'],
                             'background_color': root['background_color'],
-                            'internal_events': [dual_latch(root['internal_events'][0])],
+                            'internal_events': [dual_latch(root['internal_events'][0], layout[0]['field'])],
                             'viewgroup_items': items, 'globals_list': globals_}}
     return recolour(data, PALETTES[palette])
 
@@ -383,9 +418,13 @@ def strip_hints(data: dict) -> dict:
     return data
 
 
-def build_dual(output: Path, label: str = 'USAGE', palette: str = 'ember') -> Path:
-    data = strip_hints(compose(label, palette))
-    destination = output/f'Ember_Dual_{re.sub(r"[^A-Z0-9]+", "_", label.upper()).strip("_")}.kwgt'
+def build_dual(output: Path, label: str = 'USAGE', palette: str = 'ember', upper: str = 'fiveHour',
+               upper_tag: str | None = None) -> Path:
+    data = strip_hints(compose(label, palette, upper, upper_tag))
+    name = re.sub(r'[^A-Z0-9]+', '_', label.upper()).strip('_')
+    if upper != 'fiveHour':
+        name += '_' + rows(upper, upper_tag)[0]['tag']
+    destination = output/f'Ember_Dual_{name}.kwgt'
     thumbnails = ASSETS if (ASSETS/'preset_thumb_landscape.jpg').exists() else DONOR
     build.pack(data, thumbnails, destination)
     (output/'SHA256SUMS.txt').write_text(
@@ -398,9 +437,14 @@ if __name__ == '__main__':
     parser.add_argument('--output', type=Path, default=ROOT/'local'/'dual')
     parser.add_argument('--label', default='USAGE', help='Pixel header, e.g. CLAUDE. Max 20 characters.')
     parser.add_argument('--palette', default='ember', choices=sorted(PALETTES))
+    parser.add_argument('--upper', default='fiveHour', choices=UPPER_FIELDS,
+                        help='Feed object for the upper row. weeklyScoped shows one model\'s weekly limit '
+                             'there, for an account with no five-hour limit.')
+    parser.add_argument('--upper-tag', help=f'Two or three characters for the upper plate with --upper '
+                                            f'weeklyScoped, e.g. FBL. Default {MODEL_TAG}.')
     args = parser.parse_args()
     try:
-        path = build_dual(args.output, args.label, args.palette)
+        path = build_dual(args.output, args.label, args.palette, args.upper, args.upper_tag)
     except (ValueError, OSError, KeyError) as error:
         parser.exit(1, f'Build failed: {error}\n')
     print(f'Built {path}')

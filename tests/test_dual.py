@@ -34,6 +34,58 @@ def to_weekly(formula):
             .replace('gv(latch),"~",7))', 'gv(latch),"~",3))')
             .replace(f'df("{dual.FIVE_HOUR_RESET_FORMAT}"', f'df("{dual.WEEKLY_RESET_FORMAT}"'))
 
+def check_layout(test, data, rows):
+    """Everything stays inside the card, text does not collide, and the two rows keep clear of each other."""
+    placed = [(i['internal_title'], i['layout']) for i in data['preset_root']['viewgroup_items']
+              if 'layout' in i and not i['internal_title'].startswith('TOUCH')]
+    for title, (x, y, width, height) in placed:
+        with test.subTest(module=title):
+            test.assertGreaterEqual(x, 60); test.assertLessEqual(x + width, 1380)
+            test.assertGreaterEqual(y, 56); test.assertLessEqual(y + height, 544)
+    text = [(t, box) for t, box in placed
+            if re.search(r'PERCENT|STATE|RESET /|AGE|FETCH|READOUT|resets tag|plate text|HEADER / [A-Z]+$|legend', t)]
+    test.assertGreater(len(text), 100)
+    for index, (title, (x, y, width, height)) in enumerate(text):
+        for other, (ox, oy, ow, oh) in text[index + 1:]:
+            overlap = x < ox + ow and ox < x + width and y < oy + oh and oy < y + height
+            test.assertFalse(overlap, f'{title} overlaps {other}')
+    for row, other in zip(rows, reversed(rows)):
+        mine = [box for t, box in placed if t.startswith(row['tag'] + ' / ')]
+        theirs = [box for t, box in placed if t.startswith(other['tag'] + ' / ')]
+        test.assertGreater(len(mine), 50)
+        for x, y, width, height in mine:
+            for ox, oy, ow, oh in theirs:
+                test.assertFalse(x < ox + ow and ox < x + width and y < oy + oh and oy < y + height)
+
+def check_structure(test, donor, data):
+    """The packed preset uses only what the native themes use, and carries no private endpoint."""
+    packed = dual.strip_hints(data)
+    items = packed['preset_root']['viewgroup_items']
+    test.assertTrue(all(i['internal_type'] == 'ShapeModule' for i in items))
+    test.assertEqual({i['shape_type'] for i in items}, {'RECT', 'PATH'})
+    allowed = set().union(*(set(i) for i in donor['preset_root']['viewgroup_items']))
+    for item in items:
+        with test.subTest(module=item['internal_title']):
+            test.assertLessEqual(set(item), allowed)
+            test.assertEqual('shape_path' in item, item['shape_type'] == 'PATH')
+            for key in formulas(item):
+                test.assertEqual(item['internal_toggles'].get(key), 10)
+                test.assertTrue(formulas(item)[key].startswith('$') and formulas(item)[key].endswith('$'))
+                test.assertEqual(formulas(item)[key].count('('), formulas(item)[key].count(')'))
+    text = json.dumps(packed)
+    for variable in re.findall(r'gv\((p\d+)\)', text):
+        test.assertIn(variable, packed['preset_root']['globals_list'])
+    test.assertEqual(set(re.findall(r'[A-Za-z]', ''.join(i.get('shape_path', '') for i in items))) - set('MLhvHVZ'),
+                     set())  # only path commands the themes already draw with
+    test.assertEqual(len({i['internal_title'] for i in items}), len(items))
+    test.assertNotEqual(packed['preset_info']['id'], donor['preset_info']['id'])
+    globals_ = packed['preset_root']['globals_list']
+    test.assertEqual(globals_['source']['value'], build.PLACEHOLDER)
+    test.assertEqual(globals_['latch']['value'], dual.EMPTY_LATCH)
+    test.assertNotRegex(text, r'[\w.-]+\.ts\.net')
+    test.assertNotRegex(text, r'100\.\d+\.\d+\.\d+')
+    test.assertNotIn('desktop-', text)
+
 class DualTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -231,48 +283,10 @@ class DualTests(unittest.TestCase):
             self.assertNotIn('desktop-', text)
 
     def test_structure_matches_the_native_themes(self):
-        packed = dual.strip_hints(self.ember)
-        items = packed['preset_root']['viewgroup_items']
-        self.assertTrue(all(i['internal_type'] == 'ShapeModule' for i in items))
-        self.assertEqual({i['shape_type'] for i in items}, {'RECT', 'PATH'})
-        allowed = set().union(*(set(i) for i in self.donor['preset_root']['viewgroup_items']))
-        for item in items:
-            with self.subTest(module=item['internal_title']):
-                self.assertLessEqual(set(item), allowed)
-                self.assertEqual('shape_path' in item, item['shape_type'] == 'PATH')
-                for key in formulas(item):
-                    self.assertEqual(item['internal_toggles'].get(key), 10)
-                    self.assertTrue(formulas(item)[key].startswith('$') and formulas(item)[key].endswith('$'))
-                    self.assertEqual(formulas(item)[key].count('('), formulas(item)[key].count(')'))
-        text = json.dumps(packed)
-        for variable in re.findall(r'gv\((p\d+)\)', text):
-            self.assertIn(variable, packed['preset_root']['globals_list'])
-        self.assertEqual(set(re.findall(r'[A-Za-z]', ''.join(i.get('shape_path', '') for i in items))) - set('MLhvHVZ'),
-                         set())  # only path commands the themes already draw with
-        self.assertEqual(len({i['internal_title'] for i in items}), len(items))
-        self.assertNotEqual(packed['preset_info']['id'], self.donor['preset_info']['id'])
+        check_structure(self, self.donor, self.ember)
 
     def test_layout_stays_inside_the_card_and_text_does_not_collide(self):
-        placed = [(i['internal_title'], i['layout']) for i in self.ember['preset_root']['viewgroup_items']
-                  if 'layout' in i and not i['internal_title'].startswith('TOUCH')]
-        for title, (x, y, width, height) in placed:
-            with self.subTest(module=title):
-                self.assertGreaterEqual(x, 60); self.assertLessEqual(x + width, 1380)
-                self.assertGreaterEqual(y, 56); self.assertLessEqual(y + height, 544)
-        text = [(t, box) for t, box in placed
-                if re.search(r'PERCENT|STATE|RESET /|AGE|FETCH|READOUT|resets tag|plate text|HEADER / [A-Z]+$|legend', t)]
-        self.assertGreater(len(text), 100)
-        for index, (title, (x, y, width, height)) in enumerate(text):
-            for other, (ox, oy, ow, oh) in text[index + 1:]:
-                overlap = x < ox + ow and ox < x + width and y < oy + oh and oy < y + height
-                self.assertFalse(overlap, f'{title} overlaps {other}')
-        # Each row's meter, time line and reset text stay clear of its digits and of the other row.
-        for row, other in zip(dual.ROWS, reversed(dual.ROWS)):
-            mine = [box for t, box in placed if t.startswith(row['tag'] + ' / ')]
-            theirs = [box for t, box in placed if t.startswith(other['tag'] + ' / ')]
-            for x, y, width, height in mine:
-                for ox, oy, ow, oh in theirs:
-                    self.assertFalse(x < ox + ow and ox < x + width and y < oy + oh and oy < y + height)
+        check_layout(self, self.ember, dual.ROWS)
 
     def test_ember_palette_replaces_every_theme_colour(self):
         text = json.dumps(self.ember).upper()
@@ -323,6 +337,129 @@ class DualTests(unittest.TestCase):
             with self.subTest(sample=name):
                 svg = preview.draw('dual', 'CLAUDE', 'ember', sample)
                 self.assertTrue(svg.startswith('<svg ')); self.assertGreater(svg.count('<polygon '), 400)
+
+class ModelRowTests(unittest.TestCase):
+    """Ember Dual for an account with no five-hour limit: one model's weekly limit in the upper row."""
+    @classmethod
+    def setUpClass(cls):
+        cls.donor = json.loads((dual.DONOR/'preset.json').read_text(encoding='utf-8'))
+        cls.donor_items = {i['internal_title']: i for i in cls.donor['preset_root']['viewgroup_items']}
+        cls.default = dual.compose('CLAUDE', 'phosphor')
+        cls.plain = dual.compose('CLAUDE', 'phosphor', 'weeklyScoped', 'FBL')
+        cls.ember = dual.compose('CLAUDE', 'ember', 'weeklyScoped', 'FBL')
+        cls.items = {i['internal_title']: i for i in cls.plain['preset_root']['viewgroup_items']}
+        cls.rows = dual.rows('weeklyScoped', 'FBL')
+
+    @staticmethod
+    def pairs(tag):
+        result = [(f'{tag} / PERCENT / {n}', f'LIVE PERCENT / {n}') for n in range(1, 5)]
+        result += [(f'{tag} / CELL {n:02d} of 20', f'07.{n:02d} / QUOTA CELL {n:02d} of 20') for n in range(1, 21)]
+        result += [(f'{tag} / STATE / {n:02d}', f'QUOTA / DATA STATE / {n:02d}') for n in range(1, 14)]
+        return result + [(f'{tag} / RESET / {n:02d}', f'RESET DATE / {n:02d}') for n in range(1, 24)]
+
+    @staticmethod
+    def to_weekly(formula):
+        """Undo the two documented differences of the upper row: its feed object and its snapshot slots."""
+        return (formula.replace('".weeklyScoped.', '".weekly.')
+                .replace('gv(latch),"~",5))', 'gv(latch),"~",1))')
+                .replace('gv(latch),"~",6))', 'gv(latch),"~",2))')
+                .replace('gv(latch),"~",7))', 'gv(latch),"~",3))'))
+
+    def test_both_rows_are_seven_day_windows(self):
+        upper, lower = self.rows
+        self.assertEqual((upper['tag'], upper['field']), ('FBL', 'weeklyScoped'))
+        self.assertEqual((lower['tag'], lower['field']), ('ALL', 'weekly'))
+        for key in ('seconds', 'reset_cells', 'reset_format'):
+            self.assertEqual(upper[key], dual.ROWS[1][key]); self.assertEqual(lower[key], dual.ROWS[1][key])
+        self.assertEqual((upper['y'], lower['y']), (dual.ROWS[0]['y'], dual.ROWS[1]['y']))
+        self.assertEqual(dual.rows('weeklyScoped')[0]['tag'], dual.MODEL_TAG)
+        self.assertIs(dual.rows(), dual.ROWS)  # the default layout is untouched
+
+    def test_lower_row_reuses_theme_formulas_unchanged(self):
+        for mine, theirs in self.pairs('ALL'):
+            with self.subTest(module=mine):
+                for key in ('shape_path', 'paint_color'):
+                    self.assertEqual(formulas(self.items[mine]).get(key), formulas(self.donor_items[theirs]).get(key))
+
+    def test_upper_row_differs_only_by_feed_object_and_snapshot_slot(self):
+        for mine, theirs in self.pairs('FBL'):
+            with self.subTest(module=mine):
+                for key in ('shape_path', 'paint_color'):
+                    ours, donor = formulas(self.items[mine]).get(key), formulas(self.donor_items[theirs]).get(key)
+                    self.assertEqual(None if ours is None else self.to_weekly(ours), donor)
+                    if ours is not None:
+                        self.assertNotIn('.weekly.', ours)
+                        self.assertIn('lv(tap,tc(split,gv(latch),"~",0)+0)', ours)
+        for row in self.rows:  # each time line measures a seven-day window from its own row's reset time
+            line = formulas(self.items[f'{row["tag"]} / TIME LEFT'])
+            for key in ('shape_width', 'paint_color'):
+                self.assertIn('/604800', line[key])
+                self.assertIn(f'".{row["field"]}.', line[key])
+        self.assertNotIn('.weekly.', json.dumps(formulas(self.items['FBL / TIME LEFT'])))
+
+    def test_needle_footer_text_and_five_hour_reading_are_gone(self):
+        self.assertEqual([title for title in self.items if 'SCOPED' in title], [])
+        self.assertTrue(any('SCOPED' in i['internal_title'] for i in self.default['preset_root']['viewgroup_items']))
+        text = json.dumps(dual.strip_hints(self.plain))
+        self.assertNotIn('fiveHour', text)
+        self.assertNotIn('MARK=', text)
+        self.assertLess(len(self.plain['preset_root']['viewgroup_items']),
+                        len(self.default['preset_root']['viewgroup_items']))
+
+    def test_one_tap_action_holds_the_upper_row_reading(self):
+        touch = self.items['TOUCH / body requests fresh web data']
+        self.assertEqual(self.plain['preset_root']['internal_events'], touch['internal_events'])
+        usual = {i['internal_title']: i for i in self.default['preset_root']['viewgroup_items']}[
+            'TOUCH / body requests fresh web data']['internal_events'][0]
+        event = touch['internal_events'][0]
+        self.assertIn('".fiveHour.', usual['switch_text'])
+        # The same action as the five-hour layout, reading the per-model object for the upper row.
+        self.assertEqual(event, {**usual, 'switch_text': usual['switch_text'].replace('".fiveHour.', '".weeklyScoped.')})
+        self.assertEqual(self.plain['preset_root']['globals_list']['latch']['value'].count('~'), 7)
+
+    def test_structure_matches_the_native_themes(self):
+        check_structure(self, self.donor, self.ember)
+
+    def test_layout_stays_inside_the_card_and_text_does_not_collide(self):
+        check_layout(self, self.ember, self.rows)
+        for tag in ('FBL', 'ALL'):  # a three-character tag stays on its plate
+            px, py, pw, ph = self.items[f'{tag} / plate']['layout']
+            x, y, width, height = self.items[f'{tag} / plate text']['layout']
+            self.assertGreater(x, px); self.assertLess(x + width, px + pw)
+            self.assertGreater(y, py); self.assertLess(y + height, py + ph)
+
+    def test_it_is_a_separate_preset_with_its_own_file_name(self):
+        usual = dual.compose('CLAUDE', 'ember')
+        self.assertEqual(self.ember['preset_info']['title'], 'CD4.2 / Ember Dual / CLAUDE / FBL')
+        self.assertIn("one model's weekly reserve", self.ember['preset_info']['description'])
+        self.assertNotEqual(self.ember['preset_info']['id'], usual['preset_info']['id'])
+        self.assertNotEqual(self.ember['preset_info']['id'],
+                            dual.compose('CLAUDE', 'ember', 'weeklyScoped')['preset_info']['id'])
+        with tempfile.TemporaryDirectory() as td:
+            one = dual.build_dual(Path(td)/'one', 'CLAUDE', 'ember', 'weeklyScoped', 'FBL')
+            two = dual.build_dual(Path(td)/'two', 'CLAUDE', 'ember', 'weeklyScoped', 'FBL')
+            self.assertEqual(one.name, 'Ember_Dual_CLAUDE_FBL.kwgt')
+            self.assertEqual(one.read_bytes(), two.read_bytes())
+            self.assertEqual(dual.build_dual(Path(td)/'three', 'CLAUDE', 'ember', 'weeklyScoped').name,
+                             f'Ember_Dual_CLAUDE_{dual.MODEL_TAG}.kwgt')
+            with zipfile.ZipFile(one) as archive:
+                data = json.loads(archive.read('preset.json'))
+            for item in data['preset_root']['viewgroup_items']:
+                self.assertNotIn('layout', item); self.assertNotIn('text', item)
+
+    def test_unsupported_upper_row_or_tag_fails(self):
+        for upper, tag in (('monthly', None), ('weekly', None), ('weeklyScoped', 'F'), ('weeklyScoped', 'FBLE'),
+                           ('weeklyScoped', 'ALL'), ('weeklyScoped', 'F-L'), ('fiveHour', 'FBL')):
+            with self.subTest(upper=upper, tag=tag), self.assertRaises(ValueError):
+                dual.compose('CLAUDE', 'ember', upper, tag)
+
+    def test_preview_draws_both_sample_states(self):
+        for name, sample in preview.MODEL_SAMPLES.items():
+            with self.subTest(sample=name):
+                svg = preview.draw('dual', 'CLAUDE', 'ember', sample, 'weeklyScoped', 'FBL')
+                self.assertTrue(svg.startswith('<svg ')); self.assertGreater(svg.count('<polygon '), 400)
+        with self.assertRaises(ValueError):
+            preview.draw('cassette', 'CLAUDE', 'ember', preview.SAMPLES['normal'], 'weeklyScoped')
 
 if __name__ == '__main__':
     unittest.main()
