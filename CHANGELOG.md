@@ -6,7 +6,8 @@
 - That layout leaves out the needle and the `MARK=` footer text added on 2026-11-22, because the upper row already shows the same limit. It has fewer modules than the five-hour layout.
 - No new Kustom formula: the upper row is built the way the five-hour row is, reading a different feed object.
 - The default five-hour layout and the published downloads are unchanged. `tools/preview.py` takes the same two options.
-- Ten new offline tests (75 total passing). They do not run KWGT. Not checked on a phone yet.
+- Ten new offline tests (75 total passing). They do not run KWGT.
+- Confirmed working on the user's phone the same day. [What that covers](docs/DUAL.md#what-is-verified).
 
 ## Per-model limit on Ember Dual - 2026-11-22
 
